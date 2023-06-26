@@ -11,7 +11,7 @@ import RED from "@/core/services/red.module";
 import {message_error} from "@/utils/helpers";
 
 
-const red_url =  process.env.VUE_APP_RED_BASE_URL || (document.location.protocol + "//" + document.location.hostname + ":1880");
+const red_url =  process.env.VUE_APP_RED_BASE_URL || (document.location.protocol + "//" + document.location.hostname + ":31880");
 
 
 // 创建 node-red 的 axios 实例
