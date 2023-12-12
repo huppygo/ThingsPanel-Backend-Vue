@@ -1,0 +1,1 @@
+(window["webpackJsonp"]=window["webpackJsonp"]||[]).push([["chunk-2d0cc9d7"],{"4f4c":function(n,c,e){"use strict";e.r(c),e.d(c,"data",(function(){return o}));var o=[{name:"电表",version:"1.0.2",parent:"",model:""}]}}]);
