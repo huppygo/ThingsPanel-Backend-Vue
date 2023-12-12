@@ -3,11 +3,13 @@
     <div class="chart-header" v-if="showHeader">
       <span class="title">{{ optionData.name }}</span>
       <div class="tool-right">
+        <status-icon ref="statusIconRef" :status="status"/>
+
         <el-button class="tool-item" size="mini" icon="el-icon-more"></el-button>
       </div>
     </div>
 
-    <common-control :option="optionData" @change="handleChange"></common-control>
+    <common-control :option="optionData" @change="handleChange" @send="handleSend"></common-control>
 
     <el-dialog title="配置" width="30%"
                :visible.sync="configurationVisible">
@@ -23,12 +25,12 @@
 </template>
 
 <script>
-import { turnSwitch } from "@/api/device"
-import { currentValue } from "@/api/device";
-import {message_success} from "../../../../../utils/helpers";
-
+import { turnSwitch, sendCommandByDeviceId, currentValue } from "@/api/device"
+import {message_success} from "@/utils/helpers";
+import StatusIcon from "./StatusIcon.vue";
 export default {
   name: "Control",
+  components: { StatusIcon },
   props: {
     showHeader: {
       type: [Boolean],
@@ -41,6 +43,10 @@ export default {
     device: {
       type: [Object],
       default: () => {return {}}
+    },
+    status: {
+      type: [Boolean, Object],
+      default: () => ({})
     }
   },
   data() {
@@ -64,11 +70,11 @@ export default {
     this.optionData = JSON.parse(JSON.stringify(this.option));
     this.controlType = this.optionData.controlType;
     if (this.option.series) {
-      this.mapping = this.option.series.map(item => {return item.mapping.value})
+      this.mapping = this.option.series.map(item => {return item?.mapping?.value || ""})
     }
   },
   methods: {
-    handleChange(v) {
+    async handleChange(v) {
       // 获取绑定的属性
       let values = {};
 
@@ -84,16 +90,13 @@ export default {
 
       let param = { device_id: this.device.device, values };
       // 控制设备状态
-      turnSwitch(param)
-        .then(({data}) => {
-          if (data.code == 200) {
-            message_success("设备状态更新成功")
-          }
-        })
+      const { data } = await turnSwitch(param)
+      if (data.code == 200) {
+        // this.getSwitchValue()
+        message_success("设备状态更新成功")
+      }
     },
     updateOption(values) {
-      console.log("control.values", values)
-      // let optionTmp = JSON.parse(JSON.stringify(this.optionData));
       this.optionData.series.forEach(item => {
         let map = item.mapping;
         if (item.type == "switch") {
@@ -105,53 +108,89 @@ export default {
         } else if (item.type == "slider") {
           item.value = values[map.value];
         }
+        this.$refs.statusIconRef.flush();
       });
 
     },
-    getSwitchValue() {
+    async getSwitchValue() {
       let optionTmp = JSON.parse(JSON.stringify(this.optionData));
       let param = { entity_id: this.device.device, attribute: this.mapping }
-      currentValue(param)
-          .then(({data}) => {
-            if (data.code == 200 && data.data) {
-              let dataObj = data.data[0];
-              console.log("====control.dataObj", dataObj)
-              optionTmp.series.forEach(item => {
-                let map = item.mapping;
-                if (item.type == "switch") {
-                  if (dataObj[map.value] == map.on) {
-                    item.value = true;
-                  } else if (dataObj[map.value] == map.off){
-                    item.value = false;
-                  }
-                } else if (item.type == "slider") {
-                  item.value = dataObj[map.value];
-                }
-              })
-            } else {
-              optionTmp.series.forEach(item => {
-                if (item.type == "switch") {
-                    item.value = false;
-                } else if (item.type == "slider") {
-                  item.value = 0;
-                }
-              })
+      let { data } = await currentValue(param)
+      if (data.code == 200 && data.data) {
+        let dataObj = data.data[0];
+        optionTmp.series.forEach(item => {
+          let map = item.mapping;
+          if (item.type == "switch") {
+            if (dataObj[map.value] == map.on) {
+              item.value = true;
+            } else if (dataObj[map.value] == map.off){
+              item.value = false;
             }
+          } else if (item.type == "slider") {
+            item.value = dataObj[map.value];
+          }
+        })
+      } else {
+        optionTmp.series.forEach(item => {
+          if (item.type == "switch") {
+              item.value = false;
+          } else if (item.type == "slider") {
+            item.value = 0;
+          }
+        })
+      }
+      // this.optionData = JSON.parse(JSON.stringify(optionTmp))
 
-            this.optionData = JSON.parse(JSON.stringify(optionTmp))
+    },
+    async handleSend(cb) {
+      try {
+        const { type, identifier, name, params, dataType } = this.optionData;
+        if (type === "sendCommand") {
+          const data = {
+              device_id: this.device.device,
+              command_identifier: identifier,
+              command_data: params,
+              command_name: name
+          }
+          let { data: result } = await sendCommandByDeviceId(data);
+          if (result.code === 200) {
+            message_success("命令下发成功")
+          } else {
+            throw new Error("命令下发失败")
+          }
+          setTimeout(() => {
+            cb && cb();
+          }, 2000)
+        } else if (type === "sendAttribute") {
+          const data = {
+            device_id: this.device.device,
+            values: {}
+          }
+          data.values[identifier] = typeConvert(params, dataType);
+          let { data: result } = await turnSwitch(data);
+          if (result.code === 200) {
+            message_success("属性下发成功")
+          } else {
+            throw new Error("属性下发失败")
+          }
+          setTimeout(() => {
+            cb && cb();
+          }, 2000)
 
-          })
+        }
+      } catch(err) {
+        message_error(err.messsage);
+      }
     },
     sizeChange() {
-
     }
   }
 }
 
 const typeConvert = (value, type) => {
-  if (type.toLowerCase() == "integer") return Number(value);
+  if (type.toLowerCase() === "integer" || type.toLowerCase() === "number") return Number(value);
   if (type.toLowerCase() == "string" || type.toLowerCase() == "text") return String(value);
-  if (type.toLowerCase() == "bool" || type.toLowerCase() == "boolean") return Boolean(value);
+  if (type.toLowerCase() == "bool" || type.toLowerCase() == "boolean") return value === 'true' || value === true;
   if (type.toLowerCase() == "float") return parseFloat(value);
 }
 </script>
@@ -172,10 +211,13 @@ const typeConvert = (value, type) => {
   height: 40px;
   padding-left: 10px;
   text-align: right;
+  z-index: 9999;
   //box-shadow: 0 2px 0px 0 rgba(0, 0, 0, 0.1);
   .title {
     //width: 100%;
     //flex-grow: 1;
+    display: flex;
+    align-items: center;
     color: #fff;
     text-align: center;
     margin-top: 10px;
@@ -184,8 +226,8 @@ const typeConvert = (value, type) => {
   }
   .tool-right {
     position: absolute;
+    display: flex;
     text-align: center;
-
     top:4px;
     right: 4px;
   }

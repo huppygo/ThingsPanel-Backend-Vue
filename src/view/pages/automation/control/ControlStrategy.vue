@@ -14,7 +14,11 @@
 
     <!-- 表 start -->
     <el-table :data="tableData" v-loading="loading">
-    <el-table-column :label="$t('AUTOMATION.NO')" type="index" width="100" align="center"></el-table-column>
+    <el-table-column :label="$t('AUTOMATION.NO')" type="index" width="100" align="left">
+      <template v-slot="scope">
+        <span>{{ (params.current_page - 1) * 10 + scope.$index + 1 }}</span>
+      </template>
+    </el-table-column>
 
       <el-table-column :label="$t('AUTOMATION.RULE_NAME')" prop="automation_name"></el-table-column>
       <el-table-column :label="$t('AUTOMATION.RULE_DESCRIBE')" prop="automation_described"></el-table-column>
@@ -40,12 +44,15 @@
             <el-button type="info" size="mini" @click="handleLog(scope.row)">{{ $t('AUTOMATION.LOG') }}</el-button>
 
             <!-- 删除 -->
-            <el-popconfirm :title="$t('AUTOMATION.TITLE4')" @confirm="handleDelete(scope.row)">
+            <el-popconfirm :confirm-button-text="$t('COMMON.CONFIRM')" :cancel-button-text="$t('COMMON.CANCEL')" :title="$t('AUTOMATION.TITLE4')" @confirm="handleDelete(scope.row)">
               <el-button style="margin-left:10px" slot="reference" type="danger" size="mini">{{ $t('AUTOMATION.DELETE') }}</el-button>
             </el-popconfirm>
           </div>
         </template>
       </el-table-column>
+      <template #empty>
+        <div>{{ $t('COMMON.TABLE_NO_DATA') }}</div>
+      </template>
     </el-table>
     <!-- 表 end -->
 

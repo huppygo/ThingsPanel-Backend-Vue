@@ -515,18 +515,18 @@ const unitOption = [
 ]
 const now = new Date().toLocaleDateString();
 const dataType = [
-    { value: "float", label: "浮点型", exValue: { dataRange: "0-999", stepLength: "0.1", unit: "-" }  },
-    { value: "bool", label: "布尔类型", exValue: { dataRange: "true-false", stepLength: "-", unit: "-" } },
-    { value: "integer", label: "整数", exValue: { dataRange: "0-999", stepLength: "1", unit: "°" }   },
-    { value: "text", label: "字符串", exValue: { dataRange: "-", stepLength: "-", unit: "-" }   },
-    { value: "date", label: "时间", exValue: { dataRange: now + "-" + now, stepLength: "-", unit: "-" }   },
-    { value: "object", label: "对象", exValue: { dataRange: "{}-{}", stepLength: "-", unit: "-" }   },
+    { value: "float", label: i18n.t('PLUGIN.MATTER_MODEL_TABLE.PARAM_TYPE.FLOAT'), exValue: { dataRange: "0-999", stepLength: "0.1", unit: "-" }  },
+    { value: "bool", label: i18n.t('PLUGIN.MATTER_MODEL_TABLE.PARAM_TYPE.BOOLEAN'), exValue: { dataRange: "true-false", stepLength: "-", unit: "-" } },
+    { value: "integer", label: i18n.t('PLUGIN.MATTER_MODEL_TABLE.PARAM_TYPE.INT'), exValue: { dataRange: "0-999", stepLength: "1", unit: "°" }   },
+    { value: "text", label: i18n.t('PLUGIN.MATTER_MODEL_TABLE.PARAM_TYPE.STRING'), exValue: { dataRange: "-", stepLength: "-", unit: "-" }   },
+    { value: "date", label: i18n.t('PLUGIN.MATTER_MODEL_TABLE.PARAM_TYPE.DATE'), exValue: { dataRange: now + "-" + now, stepLength: "-", unit: "-" }   },
+    { value: "object", label: i18n.t('PLUGIN.MATTER_MODEL_TABLE.PARAM_TYPE.OBJECT'), exValue: { dataRange: "{}-{}", stepLength: "-", unit: "-" }   },
 ]
 const commandDataType = [
-    { value: "number", label: "数字", exValue: { dataRange: "0-999", stepLength: "0.1", unit: "-" }   },
-    { value: "text", label: "字符串", exValue: { dataRange: "-", stepLength: "-", unit: "-" }   },
-    { value: "object", label: "对象", exValue: { dataRange: "{}-{}", stepLength: "-", unit: "-" }   },
-    { value: "list", label: "列表", exValue: { dataRange: "[]-[]", stepLength: "-", unit: "-" }   },
+    { value: "number", label: i18n.t('PLUGIN.MATTER_MODEL_TABLE.PARAM_TYPE.INT'), exValue: { dataRange: "0-999", stepLength: "0.1", unit: "-" }   },
+    { value: "text", label: i18n.t('PLUGIN.MATTER_MODEL_TABLE.PARAM_TYPE.STRING'), exValue: { dataRange: "-", stepLength: "-", unit: "-" }   },
+    { value: "object", label: i18n.t('PLUGIN.MATTER_MODEL_TABLE.PARAM_TYPE.OBJECT'), exValue: { dataRange: "{}-{}", stepLength: "-", unit: "-" }   },
+    { value: "list", label: i18n.t('PLUGIN.MATTER_MODEL_TABLE.PARAM_TYPE.LIST'), exValue: { dataRange: "[]-[]", stepLength: "-", unit: "-" }   },
 ]
 const required = true, only = true, advanced =true;
 export const tableAttr = {
@@ -537,6 +537,10 @@ export const tableAttr = {
         { field: "dataRange", label: i18n.t('PLUGIN.MATTER_MODEL_TABLE.LABLE4'), advanced, type: "range", default: "0-999"},
         { field: "stepLength", label: i18n.t('PLUGIN.MATTER_MODEL_TABLE.LABLE5'), advanced, default: 0.1},
         { field: "unit", label: i18n.t('PLUGIN.MATTER_MODEL_TABLE.LABLE6'), validate: { only}},
+        {
+            field: "readWrite", label: i18n.t('PLUGIN.MATTER_MODEL_TABLE.LOAD_TYPE'), type: "select", default: "r",
+            options: [{ value: "r", label: i18n.t('PLUGIN.MATTER_MODEL_TABLE.LOAD_TYPE_R') }, { value: "rw", label: i18n.t('PLUGIN.MATTER_MODEL_TABLE.LOAD_TYPE_RW') }]
+        },
         { field: "description", label: i18n.t('PLUGIN.MATTER_MODEL_TABLE.LABLE7'), advanced, type: "textarea"},
     ],
     services: [
@@ -561,9 +565,9 @@ export const standardTSL = [
                 label: "温湿度传感器",
                 tsl: {
                     properties: [
-                        { name: "temperature", title: "温度", dataType: "float", dataRange: "0-100", stepLength: 0.1, unit: "°C"},
-                        { name: "humidity", title: "湿度", dataType: "float", dataRange: "0-100", stepLength: 0.1, unit: "%"},
-                        { name: "geolocation", title: "地理位置", dataType: "object", dataRange: "", stepLength: "", unit: ""}
+                        { name: "temperature", title: "温度", dataType: "float", dataRange: "0-100", stepLength: 0.1, unit: "°C", readWrite: "r"},
+                        { name: "humidity", title: "湿度", dataType: "float", dataRange: "0-100", stepLength: 0.1, unit: "%", readWrite: "r"},
+                        { name: "geolocation", title: "地理位置", dataType: "object", dataRange: "", stepLength: "", unit: "", readWrite: "r"}
                     ]
                 }
             },
@@ -571,8 +575,8 @@ export const standardTSL = [
                 value: "pm25", label:"PM2.5传感器",
                 tsl: {
                     properties: [
-                        { name: "pm25", title: "PM2.5", dataType: "float", dataRange: "0-999", stepLength: 1, unit: "μg/m³"},
-                        { name: "pm10", title: "PM10", dataType: "float", dataRange: "0-999", stepLength: 1, unit: "mg/m³", description: "可吸入颗粒物"},
+                        { name: "pm25", title: "PM2.5", dataType: "float", dataRange: "0-999", stepLength: 1, unit: "μg/m³", readWrite: "r"},
+                        { name: "pm10", title: "PM10", dataType: "float", dataRange: "0-999", stepLength: 1, unit: "mg/m³", description: "可吸入颗粒物", readWrite: "r"},
                     ]
                 }
             },
@@ -580,8 +584,8 @@ export const standardTSL = [
                 value: "wind", label:"风速风向传感器",
                 tsl: {
                     properties: [
-                        { name: "speed", title: "风速", dataType: "float", dataRange: "0-999", stepLength: 0.1, unit: "m/s"},
-                        { name: "direction", title: "风向", dataType: "integer", dataRange: "0-360", stepLength: 2, unit: "°"},
+                        { name: "speed", title: "风速", dataType: "float", dataRange: "0-999", stepLength: 0.1, unit: "m/s", readWrite: "r"},
+                        { name: "direction", title: "风向", dataType: "integer", dataRange: "0-360", stepLength: 2, unit: "°", readWrite: "r"},
                     ]
                 }
             },
@@ -589,7 +593,7 @@ export const standardTSL = [
                 value: "noise", label:"噪声传感器",
                 tsl: {
                     properties: [
-                        { name: "noise", title: "声强", dataType: "float", dataRange: "0-999", stepLength: 1.5, unit: "dB"},
+                        { name: "noise", title: "声强", dataType: "float", dataRange: "0-999", stepLength: 1.5, unit: "dB", readWrite: "r"},
                     ]
                 }
             },
@@ -597,7 +601,7 @@ export const standardTSL = [
                 value: "light", label:"光照强度传感器",
                 tsl: {
                     properties: [
-                        { name: "light", title: "光照", dataType: "float", dataRange: "0-200000", stepLength: 0.001, unit: "Lux"},
+                        { name: "light", title: "光照", dataType: "float", dataRange: "0-200000", stepLength: 0.001, unit: "Lux", readWrite: "r"},
                     ]
                 }
             },
@@ -605,7 +609,7 @@ export const standardTSL = [
                 value: "air_pressure", label:"气压传感器",
                 tsl: {
                     properties: [
-                        { name: "air", title: "气压", dataType: "float", dataRange: "30-110", stepLength: 0.25, unit: "kPa"},
+                        { name: "air", title: "气压", dataType: "float", dataRange: "30-110", stepLength: 0.25, unit: "kPa", readWrite: "r"},
                     ]
                 }
             }

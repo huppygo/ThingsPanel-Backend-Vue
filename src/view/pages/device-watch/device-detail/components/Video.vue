@@ -3,6 +3,8 @@
     <div class="chart-header" v-if="showHeader">
       <span class="title">{{ optionData.name }}</span>
       <div class="tool-right" v-if="optionData.type=='monitor'">
+        <status-icon ref="statusIconRef" :status="status"/>
+
         <el-button class="tool-item" :class="monitorType==='control' ? 'selected' : ''" size="mini" 
           @click="handleChangeMonitorType('control')">控制</el-button>
 
@@ -42,11 +44,12 @@ import ProtocolPluginAPI from "@/api/protocolPlugin"
 import VideoPlayer from "@/components/video/video";
 import MonitorPlayer from "@/components/video/monitor";
 import EzvizPlayer from "@/components/video/ezviz";
+import StatusIcon from "./StatusIcon.vue";
 
 export default {
   name: "Video",
   components: {
-    VideoPlayer, MonitorPlayer, EzvizPlayer
+    VideoPlayer, MonitorPlayer, EzvizPlayer, StatusIcon
   },
   props: {
     showHeader: {
@@ -60,6 +63,10 @@ export default {
     device: {
       type: [Object],
       default: () => {return {}}
+    },
+    status: {
+      type: [Boolean, Object],
+      default: () => ({})
     }
   },
   data() {
@@ -126,10 +133,12 @@ export default {
     padding-left: 10px;
     text-align: right;
     //box-shadow: 0 2px 0px 0 rgba(0, 0, 0, 0.1);
-
+    z-index: 9999;
     .title {
       //width: 100%;
       //flex-grow: 1;
+      display: flex;
+      align-items: center;
       color: #fff;
       text-align: center;
       margin-top: 10px;

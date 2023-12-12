@@ -1,3 +1,4 @@
+import i18n from "@/core/plugins/vue-i18n.js"
 
 /**
  * 插件类型
@@ -6,23 +7,23 @@ const PluginType = {
     /**
      * 设备插件
      */
-    Device: 1,
+    device: 1,
     /**
      * 协议插件
      */
-    Protocol: 2,
+    protocol: 4,
     /**
      * 解析脚本
      */
-    Script: 3,
+    script: 3,
     /**
      * 规则引擎
      */
-    NodRed: 4,
+    nodRed: 2,
     /**
      * 可视化插件
      */
-    Visual: 5
+    visual: 5
 }
 /**
  * 设备插件分类
@@ -35,12 +36,12 @@ const DevicePluginType = {
     Camera: 5,
     Other: 6,
     Label: {
-        Sensor: "传感器",
-        Controller: "控制器",
-        Lighting: "照明",
-        Electricity: "电力",
-        Camera: "摄像头",
-        Other: "其他",
+        Sensor: i18n.t('PLUGIN.TAB1_CONTENT.CLASSIFY_TYPE.SENSOR'),
+        Controller: i18n.t('PLUGIN.TAB1_CONTENT.CLASSIFY_TYPE.CONTROLLER'),
+        Lighting: i18n.t('PLUGIN.TAB1_CONTENT.CLASSIFY_TYPE.LIGHTING'),
+        Electricity: i18n.t('PLUGIN.TAB1_CONTENT.CLASSIFY_TYPE.ELECTRICITY'),
+        Camera: i18n.t('PLUGIN.TAB1_CONTENT.CLASSIFY_TYPE.CAMERA'),
+        Other: i18n.t('PLUGIN.TAB1_CONTENT.CLASSIFY_TYPE.OTHER'),
     },
     /**
      * 通过value获取key
@@ -167,19 +168,6 @@ const Wash = {
                 describe: data.remark
             }
         },
-        /*
-            {
-                "id": "1be2148e-ed44-52c6-3268-d441088579d5",
-                "script_name": "温湿度脚本",
-                "company": "温湿度脚本",
-                "product_name": "温湿度脚本",
-                "script_content_a": "func (){\"key\":\"value\"}",
-                "script_content_b": "func (){\"key\":\"value\"}",
-                "created_at": 1679561375,
-                "remark": "描述",
-                "device_type": "undefined"
-            }
-        */
     }
 }
 

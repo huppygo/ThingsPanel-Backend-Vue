@@ -1,15 +1,17 @@
 <template>
-  <div style="display: flex">
+  <div style="width: 100%;display: flex">
     <!-- 项目列表 -->
-    <el-select ref="projectRef" style="width: 100px;margin-right:10px" v-model="formData.projectId" :placeholder="$t('AUTOMATION.PLACEHOLDER.SELECT_PROJECT')"
-               @change="handleProjectChange">
-      <el-option v-for="(option, index) in projectOptions" :key="index" :label="option.name" :value="option.id"></el-option>
+    <el-select :no-data-text="$t('COMMON.SELECT_NO_DATA')" ref="projectRef" style="width: 16%;min-width: 100px;margin-right:10px" v-model="formData.projectId"
+      filterable :placeholder="$t('AUTOMATION.PLACEHOLDER.SELECT_PROJECT')" @change="handleProjectChange">
+      <el-option v-for="(option, index) in projectOptions" :key="index" :label="option.name"
+        :value="option.id"></el-option>
     </el-select>
 
     <!-- 分组列表 -->
-    <el-select ref="groupRef" style="width: 100px;margin-right:10px" v-if="formData.projectId" v-model="formData.groupId" :placeholder="$t('AUTOMATION.PLACEHOLDER.SELECT_GROUP')"
-               @change="handleGroupChange">
-      <el-option v-for="(option, index) in groupOptions" :key="index" :label="option.device_group" :value="option.id"></el-option>
+    <el-select :no-data-text="$t('COMMON.SELECT_NO_DATA')" ref="groupRef" style="min-width: 100px;width:16%;margin-right:10px" v-if="formData.projectId"
+      v-model="formData.groupId" :placeholder="$t('AUTOMATION.PLACEHOLDER.SELECT_GROUP')" @change="handleGroupChange">
+      <el-option v-for="(option, index) in groupOptions" :key="index" :label="option.device_group"
+        :value="option.id"></el-option>
     </el-select>
 
     <!-- 设备列表 -->
@@ -19,31 +21,42 @@
     </el-select> -->
 
     <!-- 设备列表 -->
-    <el-cascader ref="deviceRef" style="width: 100px;margin-right:10px" v-if="formData.groupId" v-model="formData.device" :placeholder="$t('AUTOMATION.PLACEHOLDER.SELECT_DEVICE')"
-      :options="deviceOptions" clearable :props="{ checkStrictly: true, emitPath: false }"
-       @change="handleDeviceChange">
-       <template slot-scope="{ node, data }">
+    <el-cascader ref="deviceRef" style="min-width: 100px;width:16%;margin-right:10px" v-if="formData.groupId"
+      v-model="formData.device" :placeholder="$t('AUTOMATION.PLACEHOLDER.SELECT_DEVICE')" :options="deviceOptions"
+      clearable :props="{ checkStrictly: true, emitPath: false }" @change="handleDeviceChange">
+      <template slot-scope="{ node, data }">
         <span>{{ data.label }}</span>
         <span v-if="!node.isLeaf"> ({{ data.children.length }}) </span>
       </template>
     </el-cascader>
 
     <!-- 状态/属性列表 -->
-    <el-select ref="stateRef" style="width: 100px;margin-right:10px" v-if="formData.device" 
-               v-model="formData.state" value-key="name" :placeholder="$t('AUTOMATION.PLACEHOLDER.SELECT_STATE')"
-               @change="handleStateChange">
+    <el-select :no-data-text="$t('COMMON.SELECT_NO_DATA')" ref="stateRef" style="min-width: 100px;width:16%;margin-right:10px" v-if="formData.device"
+      v-model="formData.state" value-key="name" :placeholder="$t('AUTOMATION.PLACEHOLDER.SELECT_STATE')"
+      @change="handleStateChange">
       <el-option-group v-for="group in stateOptions" :key="group.label" :label="group.label">
-        <el-option v-for="item in group.options" :key="item.name" :label="item.label" :value="item"></el-option>
+        <el-option v-for="item in group.options" :key="item.name"
+          :label="item.label + (item.readWrite === 'r' ? ' (只读)' : '')" :value="item"
+          :disabled="item.readWrite === 'r' && !option.operator">
+        </el-option>
       </el-option-group>
     </el-select>
 
     <template v-if="formData.state">
       <!-- 在线持续时间 -->
-      <OnlineDuration ref="onlineDurationRef" v-if="formData.state.mode=='onlineDuration'" :data="formData.state.duration" @change="handleDurationChange"/>
+      <OnlineDuration style="width: 24%" ref="onlineDurationRef" v-if="formData.state.mode == 'onlineDuration'"
+        :data="formData.state.duration" @change="handleDurationChange" />
 
       <!-- 操作符 -->
-      <OperatorSelector ref="operatorSelectorRef" v-else-if="formData.state.mode == 'property'"
-                        :data="formData.state" :option="option" @change="handleOperatorChange"/>
+      <OperatorSelector style="width: 280px" ref="operatorSelectorRef" v-else-if="formData.state.mode == 'property'"
+        :chart="chartData" :data="formData.state" :option="option" @change="handleOperatorChange" />
+
+      <el-input style="width:20%;" ref="eventRef" v-else-if="formData.state.mode === 'event'"
+        v-model="formData.state.params" @change="handleChangeState" />
+      <el-input style="width:20%;" ref="commandRef" v-else-if="formData.state.mode === 'command'"
+        v-model="formData.state.params" @change="handleChangeState" />
+      <el-input style="width:20%;" ref="customRef" v-else-if="formData.state.mode === 'custom'"
+        v-model="formData.state.params" @change="handleChangeState" />
     </template>
 
   </div>
@@ -51,7 +64,7 @@
 
 <script>
 import { business_index } from "@/api/business";
-import {device_group_drop} from "@/api/asset";
+import { device_group_drop } from "@/api/asset";
 import { getDeviceTree } from "@/api/device";
 import PluginAPI from "@/api/plugin";
 import OnlineDuration from "./OnlineDuration"
@@ -64,14 +77,15 @@ export default {
   props: {
     /**
      * 配置
+     * mode: condition 条件; action 操作
      */
     option: {
       type: [Object],
-      default: () => { return { operator: true } }
+      default: () => { return { mode: "condition", operator: true } }
     },
     data: {
       type: [Object],
-      default: () => {return {}}
+      default: () => { return {} }
     }
   },
   data() {
@@ -96,17 +110,18 @@ export default {
       // 设备列表
       deviceOptions: [],
       // 状态/属性列表
-      stateOptions: []
+      stateOptions: [],
+      chartList: [],
+      chartData: {},
+      eventList: [],
+      commandList: []
     }
   },
   watch: {
     data: {
       handler(newValue) {
-        console.log("data", newValue)
         if (newValue) {
           this.formData = JSON.parse(JSON.stringify(newValue));
-          console.log("formData", this.formData)
-          
         }
       },
       immediate: true
@@ -122,7 +137,6 @@ export default {
     "formData.groupId": {
       handler(newValue) {
         if (newValue) {
-          console.log("formData.groupId", newValue)
           this.getDeviceList(newValue);
         }
       },
@@ -149,7 +163,6 @@ export default {
      * @param v
      */
     handleGroupChange(v) {
-      console.log("handleGroupChange", v)
       this.formData.groupId = v;
       this.formData.deviceId = "";
       this.updateData();
@@ -162,7 +175,6 @@ export default {
     handleDeviceChange(v) {
       const deviceRef = this.$refs.deviceRef;
       const { data } = deviceRef.getCheckedNodes()[0];
-      console.log("handleDeviceChange.device", this.formData.device)
       this.formData.deviceId = data.value;
       this.updateData();
       this.getStateList(data.pluginId);
@@ -172,7 +184,35 @@ export default {
      * @param v
      */
     handleStateChange(v) {
-      this.formData.state = v;
+      if (v && v.mode === "onlineState") {
+        this.formData.state = { ...v };
+      } else if (v && v.mode === "property") {
+        this.formData.state = { ...v };
+        if (v.readWrite && v.readWrite === "rw") {
+          this.chartData = { type: "", controlType: "control" }
+          this.chartList.forEach(item => {
+            if (item.controlType === "control") {
+              let map = item.series[0].mapping;
+              if (map && map.value === v.name) {
+                this.chartData = item;
+              }
+            }
+          });
+        } else {
+          this.chartData = { type: "", controlType: "" }
+        }
+      } else if (v && v.mode === "command") {
+        this.formData.state = this.commandList.find(item => {
+          return item.name === v.name;
+        })
+      } else if (v && v.mode === "event") {
+        this.formData.state = this.eventList.find(item => {
+          return item.name === v.name;
+        })
+      } else if (v && v.mode === "custom") {
+        this.formData.state = { ...v };
+      }
+
       this.updateData();
     },
     /**
@@ -191,112 +231,105 @@ export default {
       this.formData.state.operator = v;
       this.updateData();
     },
+    handleChangeState(v) {
+      // this.formData.state
+      this.updateData();
+    },
     /**
      * 向父组件传值
      */
     updateData() {
-      console.log("updateData", this.formData);
       this.$emit("change", this.formData);
     },
     /**
      * 获取项目列表
      */
     getProjectList() {
-      business_index({limit: 100, page: 1})
-          .then(({data}) => {
-            if (data.code == 200) {
-              this.projectOptions = data.data?.data || [];
-            }
-          })
+      business_index({ limit: 9999, page: 1 })
+        .then(({ data }) => {
+          if (data.code == 200) {
+            this.projectOptions = data.data?.data || [];
+          }
+        })
     },
     /**
      * 获取设备分组
      * @param id  项目id
      */
     getGroupList(id) {
-      device_group_drop({business_id: id})
-          .then(({data}) => {
-            if (data.code == 200) {
-              this.groupOptions = data?.data || [];
-            }
-          })
+      device_group_drop({ business_id: id })
+        .then(({ data }) => {
+          if (data.code == 200) {
+            this.groupOptions = data?.data || [];
+          }
+        })
     },
     /**
      * 获取设备列表
      * @param id  分组id
      */
     getDeviceList(id) {
-      const params = {current_page: 1, per_page: 9999, asset_id: id}
+      const params = { current_page: 1, per_page: 9999, asset_id: id }
       getDeviceTree(params)
-          .then(({data}) => {
-            if (data.code == 200) {
-              let arr = data.data?.data || [];
+        .then(({ data }) => {
+          if (data.code == 200) {
+            let arr = data.data?.data || [];
 
-              this.deviceOptions = arr.map(item => {
+            this.deviceOptions = arr.map(item => {
+              if (item.children && item.children.length > 0) {
+                item.children = item.children.map(child => {
+                  return {
+                    label: child.device_name, value: child.device, pluginId: child.type
+                  }
+                })
+              }
+              return {
+                label: item.device_name,
+                value: item.device,
+                pluginId: item.type,
+                children: item.children || undefined
+              }
+            });
+
+            if (this.formData.deviceId) {
+              this.formData.device = [];
+              let pluginId = null;
+              const deviceObj = this.deviceOptions.find(item => {
                 if (item.children && item.children.length > 0) {
-                  item.children = item.children.map(child => {
-                    return {
-                      label: child.device_name, value: child.device, pluginId: child.type
+                  return item.children.find(child => {
+                    if (child.value == this.formData.deviceId) {
+                      pluginId = child.pluginId;
+                      this.formData.device.push(item.value);
+                      this.formData.device.push(child.value);
+                      return true;
                     }
                   })
                 }
-                return {
-                  label: item.device_name, 
-                  value: item.device, 
-                  pluginId: item.type, 
-                  children: item.children || undefined
+                if (item.value == this.formData.deviceId) {
+                  pluginId = item.pluginId;
+                  this.formData.device.push(item.value);
+                  return true;
                 }
               });
-              console.log("this.deviceOptions", this.deviceOptions)
-              
-              if (this.formData.deviceId) {
-                this.formData.device = [];
-                let pluginId = null;
-                const deviceObj = this.deviceOptions.find(item => {
-                  if (item.children && item.children.length > 0) {
-                    return item.children.find(child => {
-                      if (child.value == this.formData.deviceId) {
-                        pluginId = child.pluginId;
-                        this.formData.device.push(item.value);
-                        this.formData.device.push(child.value);
-                        return true;
-                      }
-                    })
-                  }
-                  if (item.value == this.formData.deviceId) {
-                    pluginId = item.pluginId;
-                    this.formData.device.push(item.value);
-                    return true;
-                  }
-                });
 
 
-                this.getStateList(pluginId);
-                // console.log("getDeviceList.formData", this.formData.device);
-                this.updateData();
-              }
+              this.getStateList(pluginId);
+              this.updateData();
             }
-          })
+          }
+        })
     },
     /**
      * 获取状态和属性列表
      * @param id  插件id
      */
     getStateList(id) {
-      console.log("getStateList", id)
       this.stateOptions = [];
-      if (this.option.operator) {
-        // 持续时间
-        // this.stateOptions.push({
-        //   label: this.$t('AUTOMATION.ONLINE_STATUS'), 
-        //   options: [
-        //     { mode: "onlineDuration", label: this.$t('AUTOMATION.ONLINE_DURATION'), name: "onlineDuration" },
-        //   ]
-        // });
-
+      if (this.option.mode === "condition") {
         // 在线状态
         this.stateOptions.push({
-          label: this.$t('AUTOMATION.ONLINE_OFFLINE'), 
+          label: this.$t('AUTOMATION.ONLINE_OFFLINE'),
+          mode: "onlineState",
           options: [
             { mode: "onlineState", label: this.$t('AUTOMATION.ONLINE'), name: "online" },
             { mode: "onlineState", label: this.$t('AUTOMATION.OFFLINE'), name: "offline" },
@@ -308,67 +341,157 @@ export default {
         this.updateData();
         return;
       }
-      let params = {current_page: 1, per_page: 9999, id };
+      let params = { current_page: 1, per_page: 9999, id };
       PluginAPI.page(params)
-          .then(({data}) => {
-            if (data.code == 200) {
-              const jsonStr = data.data?.data[0]?.chart_data || "{}";
-              let jsonObj = JSON.parse(jsonStr);
+        .then(({ data }) => {
+          if (data.code == 200) {
+            const jsonStr = data.data?.data[0]?.chart_data || "{}";
+            let jsonObj = JSON.parse(jsonStr);
 
-              // 物模型属性
-              let properties = jsonObj.tsl?.properties || [];
+            // 物模型属性
+            const { tsl, chart } = jsonObj;
+            let properties = tsl.properties || [];
+            let services = tsl.services || [];
+            let events = tsl.events || [];
+            this.chartList = chart;
+            let currentItem = undefined;
+            this.formData.state = {};
 
-              let arr = properties.map(item => {
-                if (this.formData.state && this.formData.state.name === item.name) {
-                  this.formData.state = { ...this.formData.state, unit: item.unit, type: item.type }
+            // 属性
+            let arr = properties.map(item => {
+              if (this.formData.state && this.formData.state.name === item.name) {
+                this.formData.state = { ...this.formData.state, unit: item.unit, type: item.type, readWrite: item.readWrite || "r" }
+              }
+              return { label: item.title, name: item.name, unit: item.unit, mode: "property", type: item.dataType, readWrite: item.readWrite || "r" };
+            });
+            this.stateOptions.push({
+              label: this.option.operator ? this.$t('AUTOMATION.PROPERTY') : "设定值",
+              mode: "property",
+              options: arr
+            });
+            if (this.option.mode === "action") {
+              // 命令标识符
+              let serviceArr = services.map(service => {
+                let params = {};
+                service.commandParams.forEach(item => {
+                  params[item.identifier] = ""
+                })
+                return {
+                  label: service.commandName, name: service.commandId, mode: "command", params: JSON.stringify(params)
+                };
+              })
+              this.commandList = serviceArr;
+              serviceArr.length && this.stateOptions.push({ label: "命令标识符", mode: "command", options: serviceArr })
+              
+              if (this.option.mode !== "action") {
+                // 自定义属性下发
+                this.stateOptions.push({
+                  label: "其他", options: [
+                    { label: "自定义属性", name: "custom", mode: "custom" }
+                  ]
+                })
+              }
+              
+            } else if (this.option.mode === "condition") {
+              // 事件标识符
+              let eventArr = events.map(event => {
+                let params = {};
+                event.eventParams.forEach(item => {
+                  params[item.identifier] = "";
+                })
+                return {
+                  label: event.eventName, name: event.eventId, mode: "event", params: JSON.stringify(params)
                 }
-                return { label: item.title, name: item.name, unit: item.unit, mode: "property", type: item.dataType };
-              });
-
-              
-              this.stateOptions.push({label: this.$t('AUTOMATION.PROPERTY'), options: arr});
-
-              console.log(this.stateOptions)
-              this.updateData();
-              
+              })
+              this.eventList = eventArr;
+              eventArr.length && this.stateOptions.push({ label: "事件标识符", mode: "event", options: eventArr })
             }
-          })
+
+            for (let index = 0; index < this.stateOptions.length; index++) {
+              const item = this.stateOptions[index];
+              let state = JSON.parse(this.data.stateJSON);
+              if (state) {
+                currentItem = item.options.find(it => it.name === state.name)
+                if (currentItem) break;
+              }
+            }
+            let state = JSON.parse(this.data.stateJSON);
+            const stateOption = this.stateOptions.find(item => {
+              return item.mode === state.mode;
+            })
+            if (stateOption && stateOption.options.length > 0) {
+              currentItem = stateOption.options.find(item => item.name === state.name)
+            }
+
+            if (state && state.mode === "onlineState") {
+            } else if (state && state.mode === "property") {
+              currentItem.operator = state.operator;
+            } else if (state && state.mode === "event") {
+              currentItem.params = state.params;
+            } else if (state && state.mode === "command") {
+              currentItem.params = state.params;
+            } else if (state && state.mode === "custom") {
+              currentItem = {
+                name: "custom",
+                ...state
+              }
+            }
+
+            this.handleStateChange(currentItem);
+            this.updateData();
+          }
+        })
     },
     /**
      * @description: 验证
      * @return {*}
-     */    
+     */
     validate() {
+
       const refs = this.$refs;
       const form = this.formData;
-      if (!form.projectId || form.projectId === "") {
-        refs.projectRef.focus();
-        message_error(this.$t('AUTOMATION.ERROR.PROJECT'));
+
+      try {
+        if (!form.projectId || form.projectId === "") {
+          refs.projectRef.focus();
+          throw new Error(this.$t('AUTOMATION.ERROR.PROJECT'));
+        }
+        if (!form.groupId || form.groupId === "") {
+          refs.groupRef.focus();
+          throw new Error(this.$t('AUTOMATION.ERROR.GROUP'));
+        }
+        if (!form.deviceId || form.deviceId === "") {
+          refs.deviceRef.focus();
+          throw new Error(this.$t('AUTOMATION.ERROR.DEVICE'));
+        }
+        if (!form.state || form.state === "" || JSON.stringify(form.state) === "{}") {
+          refs.stateRef.focus();
+          throw new Error(this.$t('AUTOMATION.ERROR.STATE'));
+        }
+        if (refs.onlineDurationRef && !refs.onlineDurationRef.validate()) return false;
+        if (refs.operatorSelectorRef && !refs.operatorSelectorRef.validate()) return false;
+
+        if (form.state.mode === "event" && !form.state.params) {
+          refs.eventRef.focus();
+          throw new Error("请输入正确的事件");
+        }
+        
+        if (form.state.mode === "command" && !form.state.params) {
+          refs.commandRef.focus();
+          throw new Error("请输入正确的命令");
+        }
+        if (form.state.mode === "custom" && !form.state.params) {
+          refs.customRef.focus();
+          throw new Error("请输入正确的属性");
+        }
+      } catch(err) {
+        message_error(err.message);
         return false;
       }
-      if (!form.groupId || form.groupId === "") {
-        refs.groupRef.focus();
-        message_error(this.$t('AUTOMATION.ERROR.GROUP'));
-        return false;
-      }
-      if (!form.deviceId || form.deviceId === "") {
-        refs.deviceRef.focus();
-        message_error(this.$t('AUTOMATION.ERROR.DEVICE'));
-        return false;
-      }
-      if (!form.state || form.state === "") {
-        refs.stateRef.focus();
-        message_error(this.$t('AUTOMATION.ERROR.STATE'));
-        return false;
-      }
-      if (refs.onlineDurationRef && !refs.onlineDurationRef.validate()) return false;
-      if (refs.operatorSelectorRef && !refs.operatorSelectorRef.validate()) return false;
       return true;
     }
   }
 }
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>

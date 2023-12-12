@@ -28,7 +28,11 @@
 
   <!-- 表 start -->
   <el-table :data="tableData" v-loading="loading">
-    <el-table-column :label="$t('SYSTEM_LOG.OPERATION_LOG.NO')" type="index" width="50"></el-table-column>
+    <el-table-column :label="$t('SYSTEM_LOG.OPERATION_LOG.NO')" type="index" width="50">
+      <template v-slot="scope">
+        <span>{{ (params.page - 1) * 10 + scope.$index + 1 }}</span>
+      </template>
+    </el-table-column>
     <el-table-column label="IP" prop="detailed.ip">
       <template v-slot="scope">
         <span class="cursor-pointer" @click="handleSearch({ip:scope.row.detailed.ip})">{{scope.row.detailed.ip}}</span>
@@ -47,6 +51,10 @@
     <el-table-column :label="$t('SYSTEM_LOG.OPERATION_LOG.TIMES')" prop="created_at"></el-table-column>
     <el-table-column :label="$t('SYSTEM_LOG.OPERATION_LOG.CONSUMING')" prop="detailed.request_time"></el-table-column>
     <el-table-column :label="$t('SYSTEM_LOG.OPERATION_LOG.USERNAME')" prop="detailed.name"></el-table-column>
+    
+    <template #empty>
+      <div>{{ $t('COMMON.TABLE_NO_DATA') }}</div>
+    </template>
   </el-table>
   <!-- 表 end -->
 

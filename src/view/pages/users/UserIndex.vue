@@ -14,7 +14,11 @@
 
   <!-- 表 start -->
   <el-table :data="tableData" v-loading="loading">
-    <el-table-column :label="$t('SYSTEM_MANAGEMENT.USER_MANAGEMENT.NO')" type="index" width="50"></el-table-column>
+    <el-table-column :label="$t('SYSTEM_MANAGEMENT.USER_MANAGEMENT.NO')" type="index" width="50">
+      <template v-slot="scope">
+        <span>{{ (params.page - 1) * 10 + scope.$index + 1 }}</span>
+      </template>
+    </el-table-column>
     <el-table-column :label="$t('SYSTEM_MANAGEMENT.USER_MANAGEMENT.USERNAME')" prop="email"></el-table-column>
     <el-table-column :label="$t('SYSTEM_MANAGEMENT.USER_MANAGEMENT.NAME')" prop="name"></el-table-column>
     <el-table-column :label="$t('SYSTEM_MANAGEMENT.USER_MANAGEMENT.EMAIL')" prop="email"></el-table-column>
@@ -35,7 +39,7 @@
           <el-button type="indigo" class="mr-3" size="mini"
                      :disabled="!hasAuth('sys:user:editpassword')"
                      @click="handleResetPassword(scope.row)">{{ $t('SYSTEM_MANAGEMENT.USER_MANAGEMENT.CHANGEPASSWORD') }}</el-button>
-          <el-popconfirm :title="$t('SYSTEM_MANAGEMENT.TITLE4')" @confirm="handleDelete(scope.row)">
+          <el-popconfirm :confirm-button-text="$t('COMMON.CONFIRM')" :cancel-button-text="$t('COMMON.CANCEL')" :title="$t('SYSTEM_MANAGEMENT.TITLE4')" @confirm="handleDelete(scope.row)">
             <el-button slot="reference" type="danger" size="mini" :disabled="!hasAuth('sys:user:del')">{{ $t('SYSTEM_MANAGEMENT.DELETE') }}</el-button>
           </el-popconfirm>
         </div>

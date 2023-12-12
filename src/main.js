@@ -7,7 +7,7 @@ Vue.use(AMap);
   // 初始化vue-amap
 AMap.initAMapApiLoader({
   // 高德key
-  key: '9869564a976c2ed9195e4dad8c3ad687',
+  key: '890a2c1acff8c505c7d88acaa21f8804',
   plugin: [
     'AMap.Geolocation',  //定位空间，用来获取和展示用户主机所在的经纬度位置
     'AMap.Autocomplete',  //输入提示插件
@@ -22,12 +22,15 @@ AMap.initAMapApiLoader({
     "AMap.Geocoder"     //地图编码
   ]
 });
-
+window._AMapSecurityConfig = {
+    securityJsCode: '0e3695afbd6670b268044894df285dde',
+}
 
 import Vue from "vue";
 import stringify from 'qs/lib/stringify';
 import VueAxiosPlugin from 'vue-axios-plugin';
 import App from "./App.vue";
+import Share from "./Share.vue"
 import router from "./router";
 import store from "./core/services/store";
 import GlobalComponents from './components/global-components';
@@ -108,8 +111,6 @@ import "./core/plugins/inline-svg";
 import "./core/plugins/metronic";
 import "@mdi/font/css/materialdesignicons.css";
 
-
-
 // API service init
 ApiService.init();
 
@@ -131,13 +132,12 @@ Vue.directive('focus', {
     }
 })
 
-
 new Vue({
     router,
     store,
     i18n,
     vuetify,
-    template: '<App/>',
+    template: "<App/>",
     components: { App },
     render: h => h(App)
 }).$mount("#app");

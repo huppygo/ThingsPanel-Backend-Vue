@@ -1,49 +1,122 @@
 import JwtService from "@/core/services/jwt.service";
-import { ws_url } from "@/api/Local_Url"
-let wsServer = ws_url + '?token=' + JwtService.getToken();
-
-let websocket = {
-    ws: null,
-    connect: function () {
-        console.log("WebSocket starting...");
-        this.createConnect();
-    },
-    createConnect: function () {
-        let _this = this;
-
-        _this.ws = new WebSocket(wsServer);
-        _this.ws.onopen = function (evt) {
-            console.log("WebSocket Connected to WebSocket server.");
-        };
-
-        _this.ws.onclose = function (evt) {
-            console.log("WebSocket Disconnected");
-        };
-
-        _this.ws.onerror = function (evt, e) {
-            console.log('WebSocket Error occured: ' + evt.data);
-        };
-    },
-    onmessage: function (callback) {
-        this.ws.onmessage = function (data) {
-            callback(data);
-        };
-    },
-    send: function (data) {
-        if (this.ws && this.ws.readyState === 1) {
-            this.ws.send(JSON.stringify(data));
+import { ws_url } from "@/api/LocalUrl"
+let wsServer = ws_url + (ws_url.endsWith("/") ? "ws/device/current" : "/ws/device/current")
+/**
+ * websocket封装
+ * let ws = new websocket();
+ *  ws.init((event) => {
+ *    console.log(event)
+ *  });
+ *  ws.onReady(() => {
+ *    ws.send({ device_id: ""})
+ *  })
+ *  ws.onMessage((result) => {
+ *    console.log("onMessage", result)
+ *  })
+ * @returns 
+ */
+const websocket = (wsUrl = wsServer) => {
+    let socket = null;
+    let onReadyCallback = null;
+    let onCloseCallback = null;
+    const init = (callback) => {
+        if (typeof (WebSocket) === "undefined") {
+            alert("您的浏览器不支持socket")
         } else {
-            //try reconnection
-            setTimeout(function () {
-                websocket.send(data);
-            }, 1000);
+            // 创建websocket连接
+            socket = new WebSocket(wsUrl);
+            /**
+             * 连接发生错误的回调方法
+             * @param {*} err 
+             */
+            socket.onerror = (err) => {
+                socket = null;
+                callback && callback({code: 401, message: "连接失败"})
+            };
+            /**
+             * 连接成功建立的回调方法
+             */
+            socket.onopen = () => {
+                onReadyCallback && onReadyCallback();
+                callback && callback({code: 200, message: "连接成功"})
+            }
+           
+            /**
+             * 连接关闭的回调方法
+             */
+            socket.onclose = () => {
+                socket = null;
+                onCloseCallback && onCloseCallback();
+                callback && callback({code: 400, message: "连接关闭"})
+            }
         }
-    },
-    close: function () {
-        if(this.ws && this.ws.readyState === 1){
-            this.ws.close();
+    };
+
+    /**
+     * 连接成功后的回调
+     * @param {*} callback 
+     */
+    const onReady = (callback) => {
+        onReadyCallback = callback;
+    };
+        
+
+    /**
+     * 连接关闭后的回调
+     * @param {*} callback 
+     */
+    const onClose = (callback) => {
+        onCloseCallback = callback;
+    };
+
+    /**
+     * 发送消息
+     * @param {*} deviceId 
+     */
+    const send = (data, type="json") => {
+        if (type === "json") {
+            const params = {
+                ...data,
+                token: JwtService.getToken()
+            }
+            if (socket) {
+                socket.send(JSON.stringify(params))
+            }
+        } else if (type === "string") {
+            if (socket) {
+                socket.send(data)
+            }
+        }
+    };
+
+    const onMessage = (onReceive) => {
+        if (socket) {
+            socket.onmessage = (event) => {
+                onReceive && onReceive(event.data)
+            }
         }
     }
-};
 
-export default websocket;
+    /**
+     * 断开连接
+     */
+    const close = () => {
+        return new Promise((resolve, reject) => {
+            if (socket) {
+                socket.close();
+                socket = null;
+            }
+            resolve(true);
+        });
+    }
+
+    return { 
+        init,
+        send,
+        onReady,
+        onClose,
+        onMessage,
+        close
+    }
+}
+export { websocket };

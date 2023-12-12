@@ -185,9 +185,18 @@ export function _debounce(fn, wait) {
     wait = wait || 600;
     return function () {
       let that = this;
+      let args = arguments;
       if(timeout !== null)   clearTimeout(timeout);  
       timeout = setTimeout(() => {
-        fn.apply(that);
+        fn.apply(that, args);
       }, wait);
     }    
 }
+
+export function typeConvert(value, type) {
+    if (!type) return value;
+    if (type.toLowerCase() == "integer" || type.toLowerCase() == "number") return Number(value) || 0;
+    if (type.toLowerCase() == "string" || type.toLowerCase() == "text") return String(value);
+    if (type.toLowerCase() == "bool" || type.toLowerCase() == "boolean") return value === 'true' || value === true;
+    if (type.toLowerCase() == "float") return parseFloat(value) || 0;
+  }

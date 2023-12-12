@@ -4,6 +4,8 @@
       <div class="charts-panel-item" v-for="(option, index) in chartList" :key="'dashboard'+index">
         <tp-status v-if="option.type=='status'" ref="tpStatus" :option="option" :data-src="dataSrc" @bind="handleBind"></tp-status>
         <tp-device-status v-else-if="option.type=='deviceStatus'" ref="tpDeviceStatus" mode="edit" :option="option" @bind="handleBind"></tp-device-status>
+        <tp-signal-status v-else-if="option.type=='signalStatus'" ref="tpSignalStatus" :data-src="dataSrc" mode="edit" :option="option" @bind="handleBind"></tp-signal-status>
+        <tp-text-info v-else-if="option.type=='textInfo'" ref="tpTextInfo" :option="option" :data-src="dataSrc" mode="edit" @bind="handleBind"/>
         <tp-e-chart v-else style="width: 300px;height: 300px" :option="option" :data-src="dataSrc" @clickChart="showDialog"></tp-e-chart>
       </div>
     </div>
@@ -37,9 +39,7 @@
               <el-form-item :label="$t('PLUGIN.CHART_INFO_TAB.TAB_TITLE5')">
                 <el-input style="width: 200px" v-model="chartTitle"></el-input>
               </el-form-item>
-<!--              <el-form-item label="颜色">-->
 
-<!--              </el-form-item>-->
               <el-form-item :label="$t('PLUGIN.CHART_INFO_TAB.TAB_TITLE6')">
                 <el-input-number style="width: 200px" v-model="fontSize"></el-input-number>
               </el-form-item>
@@ -67,14 +67,16 @@
 <script>
 import TpStatus from "../../components/dashboard/Status"
 import TpEChart from "../../components/dashboard/EChart"
+import TpSignalStatus from "../../components/dashboard/SignalStatus"
 import TpDeviceStatus from "../../components/dashboard/DeviceStatus"
+import TpTextInfo from "../../components/dashboard/TextInfo"
 import CustomEChartDialog from "./CustomEchartDialog";
 import global from "../../../common/global";
 import {message_error} from "@/utils/helpers";
 
 export default {
   name: "DashboardPanel",
-  components: { TpEChart, TpStatus, TpDeviceStatus, CustomEChartDialog },
+  components: { TpEChart, TpStatus, TpSignalStatus, TpDeviceStatus, TpTextInfo, CustomEChartDialog },
   props: {
     charts: {
       type: [Object, Array],
@@ -129,6 +131,7 @@ export default {
      * @param v
      */
     showDialog(option) {
+      console.log("====showDialog", option)
       this.chartOption = option;
       if (option.type == "status") {
         this.$nextTick(() => {
@@ -139,6 +142,15 @@ export default {
         this.$nextTick(() => {
           this.$refs["tpDeviceStatus"][0].showDialog(option);
         })
+        return;
+      } else if (option.type == "signalStatus") {
+        this.$nextTick(() => {
+          console.log("====tpSignalStatus", this.$refs["tpSignalStatus"])
+          this.$refs["tpSignalStatus"][0].showDialog(option);
+        })
+        return;
+      } else if (option.type === "textInfo") {
+        this.$refs["tpTextInfo"][0].showDialog(option);
         return;
       }
       this.dialogVisible = true
@@ -197,9 +209,7 @@ export default {
      */
     changeMappingDataSource(item) {
       let source = this.dataSrc.find(v => v.name == item.value);
-      if (this.echartName == "") {
-        this.echartName = source.title;
-      }
+      this.chartName = source.title;
     },
     handleCustom() {
       this.customDialogVisible = true;
@@ -230,6 +240,7 @@ div {
 
 
 .charts-panel-item {
+  position: relative;
   display: inline-block;
   box-shadow: 0 2px 4px rgba(0, 0, 0, .12), 0 0 6px rgba(0, 0, 0, .04);
   width: 300px;

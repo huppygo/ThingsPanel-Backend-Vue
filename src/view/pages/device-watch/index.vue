@@ -10,7 +10,11 @@
     <!-- 表 start -->
     <el-form class="inline-edit">
       <el-table :data="tableData" v-loading="loading">
-        <el-table-column :label="$t('DEVICE_MONITORING.NO')" type="index" width="600"></el-table-column>
+        <el-table-column :label="$t('DEVICE_MONITORING.NO')" type="index" width="110">
+          <template v-slot="scope">
+            <span>{{ (params.page - 1) * 10 + scope.$index + 1 }}</span>
+          </template>
+        </el-table-column>
 
         <el-table-column :label="$t('DEVICE_MONITORING.PROJECT_NAME')" prop="name" align="left">
           <template v-slot="scope">
@@ -20,7 +24,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column align="left" :label="$t('DEVICE_MONITORING.OPERATION')" width="160">
+        <el-table-column align="left" :label="$t('DEVICE_MONITORING.OPERATION')" width="90">
           <template v-slot="scope">
             <!-- <div class="text-center">
               <el-button type="indigo" size="mini" @click="showDeviceChart(scope.row)">查看</el-button>
@@ -30,6 +34,9 @@
             </div>
           </template>
         </el-table-column>
+        <template #empty>
+          <div>{{ $t('COMMON.TABLE_NO_DATA') }}</div>
+        </template>
       </el-table>
     </el-form>
     <!-- 表 end -->
@@ -80,14 +87,12 @@ export default {
         if(data.code === 200) {
           this.tableData = data.data.data ? data.data.data : []
           this.total = data.data.total
-          console.log(data.data.data)
         }
       }).finally(()=>{
         this.loading = false
       })
     },
     showDeviceChart(row) {
-      console.log(row)
       this.$router.push({name: "DeviceDetail", query: {businessId: row.id, name: row.name}})
     },
   },

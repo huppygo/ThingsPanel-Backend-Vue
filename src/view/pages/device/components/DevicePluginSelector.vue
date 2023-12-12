@@ -24,7 +24,9 @@
               <el-button type="text" size="mini" v-if="scope.row.status === 'store'"
                 >安装</el-button>
 
-              <el-button type="text" size="mini"  slot="reference" @click="handleView(scope.row)">查看</el-button>
+              <el-button type="text" size="mini"  slot="reference" v-if="scope.row.status !== 'store'"  @click="handleView(scope.row)">
+                查看
+              </el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -82,7 +84,7 @@ export default {
   watch: {
     searchText: {
       handler(newValue) {
-        if (newValue) {
+        if (this.debounceSearchTextChange) {
           this.debounceSearchTextChange();
         }
       },
@@ -114,6 +116,11 @@ export default {
      * @return {Array}
      */
     querySearch() {
+      if (!this.searchText) {
+        this.queryList = this.options;
+        this.getList();
+        return;
+      }
       const result = fuzzysort.go(this.searchText, this.options, { keys: ["name", "author"] });
       this.queryList = result.map(item => item.obj);
       this.getList();
@@ -148,14 +155,12 @@ export default {
      */
     showPopover() {
       this.$nextTick(() => {
-        console.log("showPopover", this.data.plugin_name)
         this.$refs.searchInput.focus();
         this.debounceSearchTextChange();
       });
     },
     handleSelect(row) {
       this.$emit("select", row, () => {
-        console.log("handleSelect", row)
         this.searchText = row.name;
         this.debounceSearchTextChange();
       });
@@ -163,7 +168,6 @@ export default {
     handleView(row) {
       this.currentItem = row;
       this.showDetailDialog = true;
-      console.log("handleView", row);
       // this.$emit("view", row);
     },
     handleGoToPlugin() {

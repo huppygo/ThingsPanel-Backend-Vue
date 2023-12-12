@@ -270,7 +270,6 @@ export default {
      * @returns {Promise<void>}
      */
     async createWindow(boatData) {
-      console.log("====map.createWindow.boatData", boatData)
       const windows = [];
 
       /*
@@ -343,7 +342,7 @@ export default {
 };
 </script>
 
-<style  lang="scss">
+<style  lang="scss" scoped>
 .amap-page-container {
   overflow: hidden;
 }
@@ -410,7 +409,7 @@ export default {
 }
 </style>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .control {
   border: 1px solid #ccc;
   font-size: 12px;

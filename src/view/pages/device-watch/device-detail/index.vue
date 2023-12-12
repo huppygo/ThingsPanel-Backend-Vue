@@ -1,13 +1,13 @@
 <template>
   <div class="device-watch-container">
     <div class="header">
-      <el-button class="el-button--indigo" size="medium" @click="back">{{ $t('DEVICE_WATCH_DETAIL.RETURN') }}</el-button>
+      <el-button type="border" size="small" icon="el-icon-back" @click="back">{{ $t('DEVICE_WATCH_DETAIL.RETURN') }}</el-button>
     </div>
     <div class="content">
 
       <div class="left-tree">
         <el-input class="el-dark-input search-input" suffix-icon="el-icon-search" v-model="filterValue" autocomplete="off" :placeholder="$t('DEVICE_WATCH_DETAIL.SEARCH')"></el-input>
-        <el-tree class="el-dark-tree" ref="pluginTree" lazy
+        <el-tree class="el-dark-tree" ref="pluginTree" :lazy=true default-expand-all
                  :load="loadNode" :props="defaultProps" :filter-node-method="filterNode" 
                  @node-click="node => nodeClick(node, changeNode)"></el-tree>
       </div>
@@ -43,20 +43,35 @@ export default defineComponent({
 
 
 
-    const defaultProps = { label: 'label', isLeaf: 'leaf'}
+    const defaultProps = { label: 'label', isLeaf: 'leaf', children: 'children', device: 'device', asset_name: 'asset_name'}
     /**
      * 节点过滤
      * @type {null}
      */
     const pluginTree = reference(null);
     let filterValue = ref("")
+    let filteredSubDeviceList = ref([])
     watch(filterValue, value => {
       pluginTree.value.filter(value)
+      filteredSubDeviceList.value = []
     })
 
     function filterNode(value, data) {
       if (!value) return true;
-      return data[defaultProps.label].indexOf(value) !== -1;
+      // 查询命中最外层节点时，返回所有数据
+      if (name.indexOf(value) !== -1) {
+        return true;
+      }
+      let isFilter = data[defaultProps.label].indexOf(value) !== -1 || (data[defaultProps.asset_name] && data[defaultProps.asset_name].indexOf(value) !== -1);
+
+      // 查询命中网关时，添加网关下的所有子设备到过滤列表
+      if (isFilter && data[defaultProps.children] && data[defaultProps.children].length > 0) {
+        for (let i = 0; i < data[defaultProps.children].length; i++) {
+          filteredSubDeviceList.value.push(data[defaultProps.children][i][defaultProps.device])
+        }
+      }
+
+      return isFilter || filteredSubDeviceList.value.indexOf(data[defaultProps.device]) !== -1;
     }
 
 
@@ -81,6 +96,8 @@ export default defineComponent({
       back,
       defaultProps,
       filterValue,
+      // 当查询命中网关时，对应的子设备列表
+      filteredSubDeviceList,
       pluginTree,
       filterNode,
       loadNode,
@@ -105,8 +122,11 @@ export default defineComponent({
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
   .header {
     color:  #fff;
-    height: 50px;
+    height: 48px;
     padding-bottom: 10px;
+    margin-top: -20px;
+    background-color: transparent;
+
   }
   .content {
     display: inline-flex;
@@ -126,6 +146,9 @@ export default defineComponent({
         //border-color: #5867dd!important;
         border-radius: 10px;
         margin: 2px;
+      }
+      ::v-deep .el-icon-loading{
+        display: none !important;
       }
     }
 

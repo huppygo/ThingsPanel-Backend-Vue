@@ -1,5 +1,9 @@
+
 <template>
   <div>
+    <div style="display: flex;float: left;margin-bottom: 10px">
+      <span v-if="eventSubject!==''">设备上报事件主题: {{eventSubject}}</span>
+    </div>
     <div style="display: flex;float: right;margin-bottom: 10px">
       <el-button type="border" size="medium" @click="getList">刷新</el-button>
     </div>
@@ -13,7 +17,7 @@
         </templace>
       </el-table-column>
 
-      <el-table-column label="事件内容" prop="data" width="auto"></el-table-column>
+      <el-table-column label="事件参数" prop="data" width="auto"></el-table-column>
 
     </el-table>
     <!-- 表 end -->
@@ -46,10 +50,20 @@ export default {
       params: {
         current_page: 1,
         per_page: 10
-      }
+      },
+      eventSubject: 'device/event'
     }
   },
   mounted() {
+    if (this.device.device_type === '1') {
+      // 设备
+      this.eventSubject = 'device/event';
+    } else if (this.device.device_type === '2' && this.device.protocol === 'MQTT') {
+      // 网关
+      this.eventSubject = 'gateway/event';
+    } else {
+      this.eventSubject = '';
+    }
     this.getList();
   },
   methods: {

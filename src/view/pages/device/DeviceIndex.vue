@@ -2,7 +2,7 @@
 <div class="rounded card p-4 ">
   <el-row type="flex" :gutter="20" class="pt-3 pb-3 px-3">
     <el-col :span="12">
-      <TableTitle>{{ $t("DEVICE_ACCESS.DEVICE") }}</TableTitle>
+      <TableTitle>{{ name }} - {{ $t("DEVICE_ACCESS.DEVICE") }}</TableTitle>
     </el-col>
     <el-col :span="12" class="text-right">
 
@@ -46,7 +46,8 @@
 
       <el-button type="border" size="medium" @click="handleCreate()">{{ $t("DEVICE_MANAGEMENT.CREATEDEVICE")}}</el-button>
 
-      <el-button type="indigo" size="medium" @click="showManagementGroup=true">{{ $t("DEVICE_MANAGEMENT.MANAGEMENTGROUP")}}</el-button>
+      <!-- <el-button type="indigo" size="medium" @click="showManagementGroup=true">{{ $t("DEVICE_MANAGEMENT.MANAGEMENTGROUP")}}</el-button> -->
+      <el-button type="indigo" size="medium" @click="handleGroupManagement">{{ $t("DEVICE_MANAGEMENT.MANAGEMENTGROUP")}}</el-button>
     </el-col>
   </el-row>
   <!-- 筛选 end -->
@@ -94,7 +95,8 @@
     <el-table-column :label="$t('DEVICE_MANAGEMENT.GATEWAYDEVICE')" width="auto" min-width="15%">
       <template slot-scope="scope">
         <el-form-item :error="scope.row.errors.device_type">
-          <DeviceTypeSelector :current-item="scope.row" :deviceType.sync="scope.row.device_type" @change="deviceTypeChange(scope.row)"
+          <DeviceTypeSelector ref="deviceTypeSelectorRef" 
+            :current-item="scope.row" :deviceType.sync="scope.row.device_type" @change="deviceTypeChange(scope.row)"
           ></DeviceTypeSelector>
         </el-form-item>
       </template>
@@ -127,7 +129,7 @@
     <el-table-column :label="$t('DEVICE_MANAGEMENT.STATE')" min-width="10%">
       <template slot-scope="scope">
         <el-tag v-if="scope.row.device_state === '1'">{{ $t('DEVICE_MANAGEMENT.ONLINE') }}</el-tag>
-        <el-tag v-else-if="scope.row.device_type!=='3'" type="info">{{ $t('DEVICE_MANAGEMENT.OFFLINE') }}</el-tag>
+        <el-tag v-else type="info">{{ $t('DEVICE_MANAGEMENT.OFFLINE') }}</el-tag>
       </template>
     </el-table-column>
     <!--  推送时间 end  -->
@@ -172,7 +174,7 @@
           <el-button style="margin-right: 10px"  type="primary" size="mini"
                      @click="deviceConfig(scope.row)">{{ $t("DEVICE_MANAGEMENT.DEVICE_DETAIL")}}</el-button>
 
-           <el-popconfirm :disabled="!hasAuth('device:del')" :title="$t('DEVICE_MANAGEMENT.DELETETHISITEM')"
+           <el-popconfirm :confirm-button-text="$t('COMMON.CONFIRM')" :cancel-button-text="$t('COMMON.CANCEL')" :title="$t('DEVICE_MANAGEMENT.DELETETHISITEM')"
                           @confirm="handleDelete(scope.row, getDeviceIndex)">
               <el-button slot="reference" type="danger" size="mini">{{ $t("DEVICE_MANAGEMENT.DELETE")}}</el-button>
            </el-popconfirm>
@@ -181,6 +183,9 @@
     </el-table-column>
     <!--  操作 end  -->
 
+    <template #empty>
+      <div>{{ $t('COMMON.TABLE_NO_DATA') }}</div>
+    </template>
   </el-table>
   </el-form>
   <!-- 表 end -->
@@ -227,7 +232,7 @@
 </template>
 
 <script>
-import {defineComponent, onBeforeUnmount} from "@vue/composition-api";
+import {defineComponent, onBeforeUnmount, getCurrentInstance} from "@vue/composition-api";
 import {ref, nextTick} from "@vue/composition-api/dist/vue-composition-api";
 
 import useRoute from "@/utils/useRoute";
@@ -255,6 +260,7 @@ import SubDeviceSettingForm from "./form/param/SubDeviceSettingForm";
 import ManagementGroupForm from "./form/group/ManagementGroupForm.vue"
 // 设备详情
 import DeviceConfigForm from "./form/config"
+import { MessageBox } from 'element-ui';
 
 export default defineComponent({
   name: "DeviceIndex",
@@ -270,16 +276,20 @@ export default defineComponent({
     SubDeviceSettingForm
   },
   setup() {
-    let {route} = useRoute()
-    // console.log(route.query.business_id)
-
-    let business_id = route.query.business_id
+    let { router, route } = useRoute()
+    const { business_id, name } = route.query;
+    const { refs } = getCurrentInstance();
 
     // 设备分组的选项
     let {
       deviceGroupOptions,
       getGroupOptions,
     } = useDeviceGroup(business_id)
+
+    // 打开分组管理页面
+    function handleGroupManagement() {
+      router.push({name: "GroupManagement", query: { business_id }})
+    }
 
     // 设备列表
     let {
@@ -309,7 +319,7 @@ export default defineComponent({
         row.protocol = "MODBUS_TCP";
       }
       currentDeviceItem.value = row;
-      console.log("deviceTypeChange", row)
+      // row.deviceTypeChanging = true;
       handleSave(row, () => {
         getDeviceIndex();
       });
@@ -327,7 +337,6 @@ export default defineComponent({
 
     const devicePluginSelectorRef = ref(null);
     function handleSelectPlugin(row, v, callback) {
-      console.log("handleSelectPlugin", row)
       bindPlugin(row, v, () => {
         callback && callback();
         getDeviceIndex();
@@ -382,7 +391,6 @@ export default defineComponent({
 
     // 编辑子设备参数
     function handleEditSubParameter(item) {
-      console.log("====handleEditSubParameter", item)
       if (!item.name) {
         item.errors.name = "请输入子设备名称"
         message_error(item.errors.name)
@@ -422,7 +430,6 @@ export default defineComponent({
      * @param item
      */
     function addChildDevice(row) {
-      console.log("addChildDevice", row)
       let rowData = JSON.parse(JSON.stringify(row));
       let childDevice = {
         id: "",
@@ -460,9 +467,7 @@ export default defineComponent({
       }
       currentDeviceItem.value = JSON.parse(JSON.stringify(row));
       deviceConfigVisible.value = true;
-      console.log("deviceConfig", row)
       let index = tableData.value.findIndex(item => item.id == row.id);
-      console.log(index)
 
     }
 
@@ -472,13 +477,16 @@ export default defineComponent({
 
     function handleHoverOmit(item) {
       item.showAllChartName = true;
-      console.log("====handleHoverOmit", item)
-
     }
+
+    onBeforeUnmount(() => {
+      
+    }) 
 
 
 
     return {
+      name,
       tableData,
       loading,
       params,
@@ -491,7 +499,7 @@ export default defineComponent({
       devicePluginSelectorRef,
       handleSelectPlugin,
       devicePluginOptions,
-
+      handleGroupManagement,
       deviceTypeMap,
       handleCreate,
       handleSave,

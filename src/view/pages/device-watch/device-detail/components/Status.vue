@@ -3,20 +3,22 @@
     <div  v-if="showHeader" class="chart-header">
       <span class="title">{{ option.name }}</span>
       <div class="tool-right">
+        <status-icon ref="statusIconRef" :status="status"/>
         <el-button class="tool-item" size="mini" icon="el-icon-more"></el-button>
       </div>
     </div>
 
-    <common-status :option="optionData"></common-status>
+    <common-status :option="option" :value="value"></common-status>
   </div>
 
 </template>
 
 <script>
-import { addTimer, clearTimer } from "@/utils/tool.js"
-import {currentValue} from "@/api/device";
+import StatusIcon from "./StatusIcon.vue";
+
 export default {
   name: "StatusIndex",
+  components: { StatusIcon },
   props: {
     showHeader: {
       type: [Boolean],
@@ -29,53 +31,28 @@ export default {
     device: {
       type: [Object],
       default: () => { return {} }
+    },
+    status: {
+      type: [Boolean, Object],
+      default: () => ({})
     }
   },
   data() {
     return {
-      optionData: {},
       timer: null,
-      flushTime: 5
+      flushTime: 5,
+      value: null
     }
   },
-  watch: {
-  },
-  mounted() {
-    this.optionData = JSON.parse(JSON.stringify(this.option));
-    this.updateOption();
-  },
-  beforeUpdate() {
-    let timer = this.$store.getters.getTimers(this.option.id);
-    // 删除计时器
-    clearInterval(timer);
-    // 状态中删除计时器
-    this.$store.commit("delTimer", this.option.id);
-    this.updateOption();
-  },
   methods: {
-    updateOption() {
-
-      let deviceId = this.device.device;
-      let attrs = this.option.mapping;
-      this.getValue(deviceId, attrs);
-      this.timer = setInterval(() => {
-        this.getValue(deviceId, attrs);
-      }, this.flushTime * 1000);
-      // 计时器存入状态
-      this.$store.commit("addTimer", { id: this.option.id, timer: this.timer});
-    },
-    getValue(deviceId, attrs) {
-      currentValue({entity_id: deviceId, attribute: attrs})
-          .then(({data}) => {
-            if (data.code == 200 && data.data) {
-              let value = data.data[0][attrs[0]]
-              console.log(value)
-              this.optionData = {series: { value }}
-            }
-          })
+    updateOption(value) {
+      try {
+        this.value = value[0].value;
+        this.$refs.statusIconRef.flush();
+      } catch (e) {
+      }
     },
     sizeChange() {
-
     }
   }
 }
@@ -85,7 +62,8 @@ export default {
 <style scoped lang="scss">
 .chart-div {
   position: relative;
-
+  left: 0;
+  right: 0;
   //margin: 10px 20px 10px 10px;
   border-radius: 4px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
@@ -104,10 +82,12 @@ export default {
   height: 40px;
   padding-left: 10px;
   text-align: right;
-  box-shadow: 0 2px 0px 0 rgba(0, 0, 0, 0.1);
+  z-index: 9999;
   .title {
     //width: 100%;
     //flex-grow: 1;
+    display: flex;
+    align-items: center;
     color: #fff;
     text-align: center;
     margin-top: 10px;
@@ -116,8 +96,8 @@ export default {
   }
   .tool-right {
     position: absolute;
+    display: flex;
     text-align: center;
-
     top:4px;
     right: 4px;
   }

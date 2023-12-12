@@ -8,7 +8,11 @@
 
     <!-- 表 start -->
     <el-table :data="tableData" v-loading="loading">
-      <el-table-column :label="$t('AUTOMATION.NO')" type="index" width="260"></el-table-column>
+      <el-table-column :label="$t('AUTOMATION.NO')" type="index" width="260">
+        <template v-slot="scope">
+          <span>{{ (params.page - 1) * 10 + scope.$index + 1 }}</span>
+        </template>
+      </el-table-column>
       <el-table-column :label="$t('AUTOMATION.NAMES')" prop="name" ></el-table-column>
       <el-table-column :label="$t('AUTOMATION.TIMES')" prop="created_at">
         <template v-slot="scope">
@@ -31,6 +35,10 @@
           </div>
         </template>
       </el-table-column>
+      
+      <template #empty>
+        <div>{{ $t('COMMON.TABLE_NO_DATA') }}</div>
+      </template>
     </el-table>
     <!-- 表 end -->
 

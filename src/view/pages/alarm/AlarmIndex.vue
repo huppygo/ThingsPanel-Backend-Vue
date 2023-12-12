@@ -2,7 +2,7 @@
  * @Author: chaoxiaoshu-mx leukotrichia@163.com
  * @Date: 2023-02-07 10:02:17
  * @LastEditors: chaoxiaoshu-mx leukotrichia@163.com
- * @LastEditTime: 2023-04-06 09:11:17
+ * @LastEditTime: 2023-10-23 09:35:26
  * @FilePath: \ThingsPanel-Backend-Vue\src\view\pages\alarm\index.vue
  * @Description: 告警信息列表
 -->
@@ -25,18 +25,26 @@
       </el-col>
 
       <el-col :span="12" class="text-right">
-        <el-select style="margin-right:10px" v-model="params.warningLevel" :placeholder="$t('ALARM.PLACEHOLDER.WARNING_LEVEL')" clearable @change="handleSearch">
-          <el-option value="low" :label="$t('AUTOMATION.WARNING_LEVEL_LOW')"></el-option>
-          <el-option value="medium" :label="$t('AUTOMATION.WARNING_LEVEL_MEDIUM')"></el-option>
-          <el-option value="high" :label="$t('AUTOMATION.WARNING_LEVEL_HIGH')"></el-option>
-        </el-select>
+        <el-row>
+          <el-col :span="12">
+            <el-select :no-data-text="$t('COMMON.SELECT_NO_DATA')" style="margin-right:10px" v-model="params.warningLevel" :placeholder="$t('ALARM.PLACEHOLDER.WARNING_LEVEL')" clearable @change="handleSearch">
+              <el-option value="1" :label="$t('AUTOMATION.WARNING_LEVEL_LOW')"></el-option>
+              <el-option value="2" :label="$t('AUTOMATION.WARNING_LEVEL_MEDIUM')"></el-option>
+              <el-option value="3" :label="$t('AUTOMATION.WARNING_LEVEL_HIGH')"></el-option>
+            </el-select>
+          </el-col>
+          <el-col :span="12">
+            <el-select :no-data-text="$t('COMMON.SELECT_NO_DATA')" v-model="params.processing_result" :placeholder="$t('ALARM.PROCESSING_RESULT')" clearable @change="handleSearch">
+              <el-option :value="ProcessingState.unprocessed" :label="$t('ALARM.UNPROCESSED')"></el-option>
+              <el-option :value="ProcessingState.processed" :label="$t('ALARM.PROCESSED')"></el-option>
+              <el-option :value="ProcessingState.ignored" :label="$t('ALARM.IGNORED')"></el-option>
+    
+            </el-select>
+          </el-col>
+        </el-row>
+        
 
-        <el-select v-model="params.processing_result" :placeholder="$t('ALARM.PROCESSING_RESULT')" clearable @change="handleSearch">
-          <el-option :value="ProcessingState.unprocessed" :label="$t('ALARM.UNPROCESSED')"></el-option>
-          <el-option :value="ProcessingState.processed" :label="$t('ALARM.PROCESSED')"></el-option>
-          <el-option :value="ProcessingState.ignored" :label="$t('ALARM.IGNORED')"></el-option>
-
-        </el-select>
+        
       </el-col>
     </el-row>
 
@@ -58,11 +66,10 @@
       </el-table-column>
       <el-table-column :label="$t('ALARM.WARNING_DESCRIPTION')" prop="warning_description" :show-overflow-tooltip="true" width="auto">
         <template v-slot="scope">
-          <p class="table-describe mad">{{ scope.row.describe }}</p>
+          <p class="table-describe mad">{{ scope.row.warning_description }}</p>
         </template>
       </el-table-column>
 
-      <el-table-column :label="$t('ALARM.PROCESSING_RESULT')" prop="updated_at" width="180"></el-table-column>
       <el-table-column :label="$t('ALARM.PROCESSING_RESULT')" prop="handle_result" width="180">
         <template v-slot="scope">
           <p v-if="scope.row.processing_result == ProcessingState.processed">{{ $t('ALARM.PROCESSED') }}</p>
@@ -87,6 +94,10 @@
           </div>
         </template>
       </el-table-column>
+      
+      <template #empty>
+        <div>{{ $t('COMMON.TABLE_NO_DATA') }}</div>
+      </template>
     </el-table>
     <!-- 表 end -->
 
@@ -176,7 +187,6 @@ export default {
       AlarmAPI.list(this.params)
         .then(({ data: result }) => {
           if (result.code === 200) {
-            console.log(result.data)
             this.tableData = result.data?.data || [];
             this.total = result.data.total;
           }
@@ -208,7 +218,6 @@ export default {
      * @return {*}
      */    
     handleShowBatchProcessing() {
-      console.log(this.selectRows)
       this.currentItem = this.selectRows;
       this.processDialogVisible = true;
     },

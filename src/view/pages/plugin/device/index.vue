@@ -95,15 +95,14 @@ export default {
           this.pluginCategory = arr.map(item => {
             return { label: item.describe, value: item['dict_value'] }
           }).reverse();
-          console.log(this.pluginCategory)
         }
       })
   },
   methods: {
     customPlugin() {
+      this.id = "";
       this.pluginJsonData = {};
       this.showEditorDialog = true
-      console.log("configuration")
       // return false
     },
     showImportPlugin() {
@@ -117,12 +116,10 @@ export default {
         this.pluginJsonData = JSON.parse(this.importPluginJson);
         this.id = "";
       }
-      console.log("handleImport", this.pluginJsonData);
       this.showEditorDialog = true;
     },
-    save(jsonObj, callback) {
-      console.log("save", jsonObj)
-
+    async save(jsonObj, callback) {
+      
       let data = {
         model_type: jsonObj.info.pluginCategory,
         chart_data: JSON.stringify(jsonObj),
@@ -136,7 +133,8 @@ export default {
         PluginAPI.edit(data).then(({data}) => {
           if (data.code == 200) {
             this.importDialogVisible = false;
-            if (callback) callback({ code: 200, msg: "修改成功"})
+            if (callback) callback({ code: 200, msg: "修改成功"});
+            this.$emit("save");
           }
         })
       } else {
@@ -154,8 +152,7 @@ export default {
      * @param data
      * @param callback
      */
-    publish(jsonObj, callback) {
-      console.log("publish", jsonObj)
+    async publish(jsonObj, callback) {
       const isAuth = this.$store.getters.getStoreAuthenticated;
       if (isAuth) {
         // 已登录
@@ -166,6 +163,13 @@ export default {
           dataResource: JSON.stringify(jsonObj),
           versionNumber: jsonObj.info.version,
           pluginDescribe: jsonObj.info.description
+        }
+        if (jsonObj.info.thumbImg && jsonObj.info.thumbImg[0].raw) {
+          // 上传图片到本地服务器
+          const fd = new FormData()
+          fd.append('file', jsonObj.info.thumbImg[0].raw)
+          let { data: result } = await StoreAPI.upload(fd)
+          deviceData.coverUrl = result.data.file.url
         }
         StoreAPI.publish.device(deviceData)
           .then(({ data: result }) => {

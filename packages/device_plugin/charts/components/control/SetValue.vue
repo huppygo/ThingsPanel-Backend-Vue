@@ -1,13 +1,9 @@
 <template>
   <div class="value-container">
-    <el-input-number v-model="inputValue" controls-position="right"
-                     :min="0"
-    ></el-input-number>
-    <el-button type="primary" @click="handleSubmit">确定</el-button>
-
-    <el-dialog>
-
-    </el-dialog>
+    <div class="center">
+      <el-input-number v-model="inputValue" controls-position="right" :min="0"></el-input-number>
+      <el-button type="primary" @click="handleSubmit">确定</el-button>
+    </div>
   </div>
 </template>
 
@@ -51,6 +47,24 @@ export default {
   width: 100%;
 }
 .el-input-number {
-  margin-right: 10px;
+  margin-bottom: 16px;
+}
+.value-container {
+  width: 100%;
+  height: 100%;
+  display: table;
+  position: absolute;
+  top: 0px;
+  .center {
+    display: table-cell;
+    vertical-align: middle;
+    text-align: center;
+    padding: 20px!important;
+    width: 100%;
+    p {
+      margin: 10px;
+    }
+
+  }
 }
 </style>

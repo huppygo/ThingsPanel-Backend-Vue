@@ -2,7 +2,7 @@
  * @Author: chaoxiaoshu-mx leukotrichia@163.com
  * @Date: 2023-02-06 09:04:58
  * @LastEditors: chaoxiaoshu-mx leukotrichia@163.com
- * @LastEditTime: 2023-03-30 10:23:34
+ * @LastEditTime: 2023-11-01 10:53:15
  * @FilePath: \ThingsPanel-Backend-Vue\src\view\pages\automation\control\CommandDevice.vue
  * @Description: 操作设备
 -->
@@ -10,22 +10,23 @@
   <div class="command-device-box">
     <div style="display: flex;margin-bottom: 10px" v-for="(command, index) in commands" :key="index">
 
-      <DeviceTypeSelector ref="deviceTypeRef" :option="{operator: false}" :data="command" @change="v=>handleCommandChange(command, v)"/>
+      <DeviceTypeSelector ref="deviceTypeRef" :option="{ operator: false, mode: 'action' }" :data="command"
+        @change="v => handleCommandChange(command, v)" />
 
-      <!-- 新增一行 -->
-      <el-button type="indigo" size="small" style="margin-left: 10px;"
-                 v-if="index == 0"
-                 @click="handleAddCommand">{{ $t('AUTOMATION.ADD_LINE') }}</el-button>
+      <span style="width:80px;margin-left: 10px;text-align: right;">
+        <!-- 新增一行 -->
+        <el-button type="indigo" size="small" v-if="index == 0" @click="handleAddCommand">{{
+          $t('AUTOMATION.ADD_LINE') }}</el-button>
 
-      <!-- 删除 -->
-      <el-button type="danger" size="small" style="margin-left: auto;"
-                 v-if="index > 0"
-                 @click="handleDeleteCommand(command)">{{ $t('AUTOMATION.DELETE') }}</el-button>
+        <!-- 删除 -->
+        <el-button type="danger" size="small" v-if="index > 0"
+          @click="handleDeleteCommand(command)">{{ $t('AUTOMATION.DELETE') }}</el-button>
+      </span>
+
 
     </div>
 
   </div>
-
 </template>
 
 <script>
@@ -53,7 +54,8 @@ export default {
           this.commands = [{}]
         }
       },
-      immediate: true
+      immediate: true,
+      deep: true
     }
   },
   methods: {
@@ -62,7 +64,7 @@ export default {
      * @param {*} command
      * @param {*} v
      * @return {*}
-     */    
+     */
     handleCommandChange(command, v) {
       for (const item in v) {
         command[item] = v[item];
@@ -72,7 +74,7 @@ export default {
     /**
      * @description: 新增一行指令
      * @return {*}
-     */    
+     */
     handleAddCommand() {
       this.commands.push({});
     },
@@ -80,10 +82,11 @@ export default {
      * @description: 删除一行指令
      * @param {*} command
      * @return {*}
-     */    
+     */
     handleDeleteCommand(command) {
       let index = this.commands.findIndex(item => item == command);
       this.commands.splice(index, 1);
+      this.$emit("change", this.commands);
     },
     validate() {
       for (let index = 0; index < this.commands.length; index++) {

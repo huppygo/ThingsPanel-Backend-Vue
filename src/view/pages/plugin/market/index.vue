@@ -1,17 +1,17 @@
 <template>
     <div class="content-form">
       <el-form label-position="left" label-width="120px">
-           <el-form-item label="插件类型：">
+           <el-form-item :label="$t('PLUGIN.TAB1_CONTENT.PLUGIN_TYPE') + ': '">
              <el-radio-group v-model="params.pluginType" size="small" @change="handlePluginTypeChanged">
-               <el-radio-button label="device">设备插件</el-radio-button>
-               <el-radio-button label="script">解析脚本</el-radio-button>
-               <el-radio-button label="nodeRed">规则引擎代码</el-radio-button>
-               <el-radio-button label="protocol">协议插件</el-radio-button>
-               <el-radio-button label="visual">可视化插件</el-radio-button>
+               <el-radio-button label="device">{{ $t("PLUGIN.TAB1_CONTENT.DEVICE_PLUGIN") }}</el-radio-button>
+               <el-radio-button label="script">{{ $t("PLUGIN.TAB1_CONTENT.ANALYSIS_SCRIPT") }}</el-radio-button>
+               <el-radio-button label="nodeRed">{{ $t("PLUGIN.TAB1_CONTENT.RULE_ENGINE") }}</el-radio-button>
+               <el-radio-button label="protocol">{{ $t("PLUGIN.TAB1_CONTENT.PROTOCOL_PLUGIN") }}</el-radio-button>
+               <el-radio-button label="visual">{{ $t("PLUGIN.TAB1_CONTENT.VISUAL_PLUGIN") }}</el-radio-button>
              </el-radio-group>
             </el-form-item>
 
-             <el-form-item label="搜索：">
+             <el-form-item :label="$t('COMMON.SEARCH') + ': '">
                 <el-row>
                   <el-col :span="20">
                     <div class="flex">
@@ -35,7 +35,8 @@
 
       <div v-if="params.displayMode==='grid'" v-loading="listLoadig">
         <div class="width-20" v-for="(item,index) in listArr" :key="index">
-          <PluginCard :key="item.id" :data="item" :isInstalled="true" :category="category"
+          <PluginCard :key="item.storeId" :data="item" :isInstalled="true" :category="category"
+                      :pluginType="params.pluginType"
                       @edit="handleEditPlugin"
                       @delete="handleDelPlugin"
                       @install="handleInstallPlugin"
@@ -49,20 +50,20 @@
           <el-table :data="listArr" v-loading="listLoadig">
 
             <!-- 名称 -->
-            <el-table-column label="名称" prop="name" align="left"></el-table-column>
+            <el-table-column :label="$t('PLUGIN.TAB2_CONTENT.NAME')" prop="name" align="left"></el-table-column>
 
-            <el-table-column label="作者"  prop="author" align="left"></el-table-column>
+            <el-table-column :label="$t('PLUGIN.TAB2_CONTENT.AUTHOR')"  prop="author" align="left"></el-table-column>
 
-            <el-table-column label="说明"  prop="describe" align="left"></el-table-column>
+            <el-table-column :label="$t('PLUGIN.TAB2_CONTENT.DESCRIBE')"  prop="describe" align="left"></el-table-column>
 
-            <el-table-column label="插件分类"  prop="devicePluginTypeLabel" align="left"></el-table-column>
+            <el-table-column :label="$t('PLUGIN.TAB2_CONTENT.PLUGIN_TYPE')"  prop="devicePluginTypeLabel" align="left"></el-table-column>
 
 
             <!-- 操作列-->
             <el-table-column align="left" :label="$t('PLUGIN.TAB2_CONTENT.OPERATION')" width="240">
               <template v-slot="scope">
                 <div style="text-align: left">
-                  <el-button slot="reference" size="mini" type="border" @click="handleInstallPlugin(scope.row)">安装</el-button>
+                  <el-button slot="reference" size="mini" type="border" @click="handleInstallPlugin(scope.row)">{{ $t('PLUGIN.TAB2_CONTENT.INSTALL') }}</el-button>
                 </div>
               </template>
             </el-table-column>
@@ -90,7 +91,6 @@
 <script>
 import PluginCard from "./PluginCard";
 import PluginAPI from "@/api/plugin.js";
-import ProtocolPlugin from "@/api/protocolPlugin.js";
 import LoginStore from '@/view/pages/auth/LoginStore';
 import StoreAPI from "@/api/store"
 import { Wash, PluginType } from "../Const";
@@ -138,11 +138,12 @@ export default {
         this.listArr = [];
         const params = {
           page: this.params.page,
-          pageSize: this.params.pageSize
+          pageSize: this.params.pageSize,
+          approvalFlag: 1,
+          pluginName: this.searchValue
         }
         StoreAPI.list[this.params.pluginType](params)
           .then(({data: result}) => {
-            console.log(result)
             if (result.code === 0) {
               const list = result.data?.list || [];
               this.total = result.data?.total || 0;
@@ -164,11 +165,7 @@ export default {
       this.load();
     },
     searchPlugin(value) {
-      if (value == "") {
-        this.listArr = this.list;
-      } else {
-        this.listArr = this.list.filter(item => item.name.indexOf(this.searchValue) > -1);
-      }
+      this.loadList();
     },
     handleChangeDisplayMode(mode) {
       this.params.displayMode = mode;
@@ -178,7 +175,6 @@ export default {
      * @param v
      */
     handlePluginTypeChanged(v) {
-      console.log("handlePluginTypeChanged", v)
       switch (v) {
         case "device": {
 
@@ -189,7 +185,6 @@ export default {
     },
     handleInstallPlugin(item, cb) {
       const isAuth = this.$store.getters.getStoreAuthenticated;
-      console.log("handleInstallPlugin", item, isAuth)
       if (isAuth) {
         // 安装
         switch(item.pluginType) {
@@ -216,19 +211,24 @@ export default {
      * @param {*} callback
      * @return {*}
      */    
-    installDevicePlugin(item, callback) {
-      let data = {
-          model_type: item.devicePluginType,
-          chart_data: item.jsonData,
-          model_name: item.name,
-          version: item.version,
-          author: item.author
+    async installDevicePlugin(item, callback) {
+      try {
+        let {data: res1} = await StoreAPI.get.device({id: item.storeId});
+        if (res1 === 0) throw new Error("获取插件失败！")
+        const data = res1.data.rePluginDevice;
+        const params = {
+          model_type: data.devicePluginType + "",
+          chart_data: data.dataResource,
+          model_name: data.pluginName,
+          version: data.versionNumber,
+          author: data.pluginAuthor
         }
-        PluginAPI.add(data).then(({data}) => {
-            if (data.code == 200) {
-              callback({ code: 200, data, msg: "安装成功！" })
-            }
-          })
+        const {data: res2 } = await PluginAPI.add(params);
+        if (res2.code !== 200) throw new Error("安装失败！")
+        callback({ code: 200, data, msg: "安装成功！" })
+      } catch(err) {
+        callback({ code: 401, data, msg: err.message })
+      }
     },
     /**
      * @description: 安装脚本插件
@@ -249,7 +249,6 @@ export default {
       };
       addCustomExchangeAgreement(data)
         .then(({ data: result }) => {
-          console.log("addCustomExchangeAgreement", result)
           if (result.code === 200) {
             callback({ code: 200, msg: "安装成功!"})
           }

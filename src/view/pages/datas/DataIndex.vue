@@ -73,7 +73,7 @@
       <div>
         <el-button class="mr-2" type="border" size="medium" @click="handleSearch()">{{ $t('DATA_MANAGEMENT.SEARCH') }}</el-button>
 
-        <el-popconfirm :title="`确定导出 ${total} 条数据吗?`" @confirm="handleExport()">
+        <el-popconfirm :confirm-button-text="$t('COMMON.CONFIRM')" :cancel-button-text="$t('COMMON.CANCEL')" :title="`确定导出 ${total} 条数据吗?`" @confirm="handleExport()">
           <el-button slot="reference" type="export" size="medium">{{ $t('DATA_MANAGEMENT.EXPORT') }}</el-button>
         </el-popconfirm>
 
@@ -85,7 +85,11 @@
 
   <!-- 表 start -->
   <el-table :data="tableData">
-    <el-table-column :label="$t('DATA_MANAGEMENT.NO')" type="index" width="50"></el-table-column>
+    <el-table-column :label="$t('DATA_MANAGEMENT.NO')" type="index" width="50">
+      <template v-slot="scope">
+        <span>{{ (params.page - 1) * 10 + scope.$index + 1 }}</span>
+      </template>
+    </el-table-column>
     <el-table-column :label="$t('DATA_MANAGEMENT.BUSINESSNAME1')" prop="bname"></el-table-column>
 
     <el-table-column :label="$t('DATA_MANAGEMENT.DWVICEGROUPNAME1')" prop="asset_name"></el-table-column>
@@ -100,7 +104,7 @@
     <el-table-column :label="$t('DATA_MANAGEMENT.TIMES')"  prop="ts"></el-table-column>
     <el-table-column :label="$t('DATA_MANAGEMENT.PROPERTY_ASLIAS')" prop="alias"></el-table-column>
     <el-table-column :label="$t('DATA_MANAGEMENT.TITLE30')" prop="key"></el-table-column>
-    <el-table-column :label="$t('DATA_MANAGEMENT.TITLE31')" prop="dbl_v">
+    <el-table-column :label="$t('DATA_MANAGEMENT.TITLE31')" prop="dbl_v" show-overflow-tooltip>
       <template v-slot="scope">
         <div v-if="scope.row.str_v.indexOf('file') == -1">
           {{ scope.row.str_v != "" ? scope.row.str_v : scope.row.dbl_v }}
@@ -115,6 +119,10 @@
     </el-table-column>
 
     <el-table-column :label="$t('DATA_MANAGEMENT.TITLE32')" prop="entity_type"></el-table-column>
+    
+    <template #empty>
+      <div>{{ $t('COMMON.TABLE_NO_DATA') }}</div>
+    </template>
   </el-table>
   <!-- 表 end -->
 

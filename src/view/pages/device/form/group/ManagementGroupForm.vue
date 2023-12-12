@@ -49,7 +49,7 @@
     </el-table-column>
     <el-table-column :label="$t('DEVICE_MANAGEMENT.MANAGEMENT_GROUP_MODEL.OPERATION')" width="auto" min-width="20%">
       <template v-slot="scope">
-        <el-popconfirm :title="$t('DEVICE_MANAGEMENT.MANAGEMENT_GROUP_MODEL.DELETETHISITEM')" @confirm="handleDelete(scope.row)">
+        <el-popconfirm :confirm-button-text="$t('COMMON.CONFIRM')" :cancel-button-text="$t('COMMON.CANCEL')" :title="$t('DEVICE_MANAGEMENT.MANAGEMENT_GROUP_MODEL.DELETETHISITEM')" @confirm="handleDelete(scope.row)">
           <el-button slot="reference" type="danger" size="medium">{{ $t('DEVICE_MANAGEMENT.MANAGEMENT_GROUP_MODEL.DELETE') }}</el-button>
         </el-popconfirm>
       </template>
@@ -64,7 +64,7 @@
         :total="total"
         :current-page.sync="params.current_page"
         :page-size="params.per_page"
-        @change="getGroupIndex"></el-pagination>
+        @current-change="getGroupIndex"></el-pagination>
   </div>
 
 </div>

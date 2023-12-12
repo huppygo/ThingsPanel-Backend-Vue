@@ -2,7 +2,7 @@
  * @Author: chaoxiaoshu-mx leukotrichia@163.com
  * @Date: 2023-02-02 08:39:13
  * @LastEditors: chaoxiaoshu-mx leukotrichia@163.com
- * @LastEditTime: 2023-04-06 09:08:04
+ * @LastEditTime: 2023-11-01 10:52:09
  * @FilePath: \ThingsPanel-Backend-Vue\src\view\pages\automation\scene\index.vue
  * @Description: 场景列表
 -->
@@ -19,7 +19,11 @@
 
     <!-- 表 start -->
     <el-table :data="tableData" v-loading="loading">
-      <el-table-column :label="$t('AUTOMATION.NO')" type="index" width="100" align="center"></el-table-column>
+      <el-table-column :label="$t('AUTOMATION.NO')" type="index" width="100" align="left">
+        <template v-slot="scope">
+          <span>{{ (params.current_page - 1) * 10 + scope.$index + 1 }}</span>
+        </template>
+      </el-table-column>
       <el-table-column :label="$t('AUTOMATION.SCENE_NAME')" prop="scenario_name" ></el-table-column>
       <el-table-column :label="$t('AUTOMATION.SCENE_DESCRIPTION')" prop="scenario_description" ></el-table-column>
       <el-table-column :label="$t('AUTOMATION.CREATE_AT')" prop="created_at">
@@ -30,18 +34,23 @@
       <el-table-column align="left" :label="$t('AUTOMATION.OPERATION')"  width="280">
         <template v-slot="scope">
           <div style="text-align: right">
+            <el-button type="success" size="mini"  @click="handleActive(scope.row)">激活</el-button>
             <el-button type="border" size="mini"  @click="handleShowEdit(scope.row)">{{ $t('AUTOMATION.EDIT')}}</el-button>
             <el-button type="info" size="mini"  @click="handleShowLog(scope.row)">{{ $t('AUTOMATION.LOG')}}</el-button>
             <!-- <el-button type="danger" size="mini"  @click="handleDelete(scope.row)">删除</el-button> -->
 
             <!-- 删除 -->
-            <el-popconfirm title="删除" @confirm="handleDelete(scope.row)">
+            <el-popconfirm :confirm-button-text="$t('COMMON.CONFIRM')" :cancel-button-text="$t('COMMON.CANCEL')" title="删除" @confirm="handleDelete(scope.row)">
               <el-button style="margin-left:10px;" slot="reference" type="danger" size="mini" >{{ $t('AUTOMATION.DELETE')}}</el-button>
             </el-popconfirm>
 
           </div>
         </template>
       </el-table-column>
+      
+      <template #empty>
+        <div>{{ $t('COMMON.TABLE_NO_DATA') }}</div>
+      </template>
     </el-table>
     <!-- 表 end -->
 
@@ -108,6 +117,17 @@ export default {
       this.formId = "";
       this.editDialogVisible = true;
     },
+    /**
+     * 激活
+     */
+    handleActive(item) {
+      Auto.Scene.active({id: item.id})
+        .then(res => {
+          if (res.data.code === 200) {
+            message_success("激活成功");
+          }
+        })
+    },
     handleShowEdit(item) {
       this.formId = item.id;
       this.editDialogVisible = true;
@@ -120,7 +140,6 @@ export default {
     handleDelete(item) {
       Auto.Scene.delete({ id: item.id })
         .then(res => {
-          console.log(res)
           if (res.data.code === 200) {
             this.getSceneList();
             message_success(this.$t('AUTOMATION.DELETE_SUCCESS'));

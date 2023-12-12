@@ -5,15 +5,24 @@
       <TableTitle>{{ $t('DEVICE_ACCESS.DEVICEACCESS') }}</TableTitle>
     </el-col>
     <el-col :span="12" class="px-2 text-right">
-      <el-button size="medium" type="border"
-                 v-if="hasAuth('business:add')" @click="handleCreate()">{{  $t('DEVICE_ACCESS.NEW_PROJECT') }}</el-button>
+      <div style="width: 100%;text-align:right">
+        <el-input style="width: 160px;margin-right:12px" size="medium" :placeholder="'输入名称检索'" clearable v-model="filterInput" @input="filterChange"></el-input>
+        <el-button style="float:right" size="medium" type="border"
+          v-if="hasAuth('business:add')" @click="handleCreate()">{{  $t('DEVICE_ACCESS.NEW_PROJECT') }}</el-button>
+      </div>
+          
+      
     </el-col>
   </el-row>
 
   <!-- 表 start -->
   <el-form class="inline-edit">
   <el-table :data="tableData" v-loading="loading">
-    <el-table-column :label="$t('DEVICE_ACCESS.NO')" type="index" width="260"></el-table-column>
+    <el-table-column :label="$t('DEVICE_ACCESS.NO')" type="index" width="90">
+      <template v-slot="scope">
+        <span>{{ (params.page - 1) * 10 + scope.$index + 1 }}</span>
+      </template>
+    </el-table-column>
 
     <el-table-column :label="$t('DEVICE_ACCESS.PROJECT_NAME')" prop="name">
       <template v-slot="scope">
@@ -51,8 +60,8 @@
                        :disabled="!hasAuth('business:edit')" @click="handleEdit(scope.row)">{{ $t('DEVICE_ACCESS.EDIT_PROJECT_NAME') }}</el-button>
 
 
-            <el-popconfirm :title="$t('DEVICE_ACCESS.TEXT44')" @confirm="handleDelete(scope.row)">
-              <el-button :disabled="!hasAuth('business:del')" slot="reference" type="danger" size="mini" >{{ $t('DEVICE_ACCESS.DELETE') }}</el-button>
+            <el-popconfirm :confirm-button-text="$t('COMMON.CONFIRM')" :cancel-button-text="$t('COMMON.CANCEL')" :title="$t('DEVICE_ACCESS.TEXT44')" @confirm="handleDelete(scope.row)">
+              <el-button slot="reference" type="danger" size="mini" >{{ $t('DEVICE_ACCESS.DELETE') }}</el-button>
             </el-popconfirm>
           </template>
         </div>
@@ -102,6 +111,8 @@ export default defineComponent({
       loading,
       params,
       total,
+      filterInput,
+      filterChange
     } = useBusinessIndex(page)
 
     // 业务的增删改
@@ -120,9 +131,10 @@ export default defineComponent({
 
     // 跳转到设备
     function showDevice(item){
-      console.log(item)
-      router.push({name: "device", query: {business_id: item.id}, params:{page: params.page}})
+      router.push({name: "device", query: {business_id: item.id, name: item.name}, params:{page: params.page}})
     }
+
+    
 
     return {
       tableData,
@@ -138,6 +150,8 @@ export default defineComponent({
       handleSave,
       handleDelete,
       dateFormat,
+      filterInput,
+      filterChange
     }
   }
 })

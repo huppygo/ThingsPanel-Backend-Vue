@@ -1,5 +1,5 @@
+
 <template>
-  
   <router-view></router-view>
 </template>
 
@@ -29,13 +29,16 @@ body {
 import { OVERRIDE_LAYOUT_CONFIG } from "@/core/services/store/config.module";
 import {RESET_LAYOUT_CONFIG} from "./core/services/store/config.module";
 import {local_url} from "@/api/LocalUrl";
+import JwtService from "@/core/services/jwt.service";
+
+
 export default {
   name: "ThingsPanel",
-  
   mounted() {
-    console.log("====location", document.location.protocol + "//" + document.location.host );
-
-    this.$store.dispatch("setRouters");
+    // 只有已经认证的用户才会请求路由
+    if (!!JwtService.getToken()) {
+      this.$store.dispatch("setRouters");
+    }
     this.$store.commit("refresh_page");
     /**
      * this is to override the layout config using saved data from localStorage
@@ -43,9 +46,9 @@ export default {
      */
     this.$store.dispatch(OVERRIDE_LAYOUT_CONFIG);
     window.localStorage.setItem("base_url", local_url);
+
   },
   beforeMount() {
-    console.log("local_url", local_url)
     this.$store.dispatch(RESET_LAYOUT_CONFIG);
     // // show page loading
     // this.$store.dispatch(ADD_BODY_CLASSNAME, "page-loading");

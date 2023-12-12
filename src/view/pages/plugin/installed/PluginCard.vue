@@ -6,7 +6,6 @@
           img-alt="Image"
           img-top
           tag="article"
-
   >
 
     <div style="padding: 2.25rem;">
@@ -61,7 +60,7 @@
 
 <script>
 import { MessageBox } from 'element-ui';
-import {message_success} from "../../../../utils/helpers";
+import {message_success} from "@/utils/helpers";
 import PluginAPI from "@/api/plugin.js"
 import { PluginType } from "../Const";
 export default {
@@ -89,7 +88,6 @@ export default {
   },
   created() {
     this.pluginData = JSON.parse(JSON.stringify(this.data));
-    console.log("===PluginCard.pluginData" , this.pluginData)
   },
   methods: {
     /**
@@ -115,7 +113,6 @@ export default {
      * @param item
      */
     clickPlugin(item) {
-      console.log("====clickPlugin", item)
     },
     /**
      * 打开导出对话框
@@ -163,15 +160,20 @@ export default {
      * @param e
      */
     onError(e) {
-      console.log(e)
     }
   }
 }
 </script>
 
 <style scoped>
+
 .marketbox {
   border-radius: 8px;
+}
+.card-title {
+  white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .text-overflow {
   text-overflow: ellipsis;

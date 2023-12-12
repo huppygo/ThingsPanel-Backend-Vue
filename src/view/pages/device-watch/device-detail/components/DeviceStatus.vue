@@ -13,8 +13,6 @@
 </template>
 
 <script>
-import { addTimer, clearTimer } from "@/utils/tool.js"
-import {currentValue} from "@/api/device";
 export default {
   name: "DeviceStatus",
   props: {
@@ -95,10 +93,13 @@ export default {
   height: 40px;
   padding-left: 10px;
   text-align: right;
+  z-index: 9999;
   //box-shadow: 0 2px 0px 0 rgba(0, 0, 0, 0.1);
   .title {
     //width: 100%;
     //flex-grow: 1;
+    display: flex;
+    align-items: center;
     color: #fff;
     text-align: center;
     margin-top: 10px;

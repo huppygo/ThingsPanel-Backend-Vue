@@ -3,6 +3,7 @@ node_modules
 dist
 
 # local env files
+.env.dev
 .env.local
 .env.*.local
 # Log files
@@ -20,3 +21,6 @@ yarn-error.log*
 *.sw?
 
 yarn.lock
+.env.dev
+src/view/pages/weather-station/index.vue
+.gitignore

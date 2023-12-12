@@ -2,24 +2,24 @@
  * @Author: chaoxiaoshu-mx leukotrichia@163.com
  * @Date: 2023-01-31 16:45:45
  * @LastEditors: chaoxiaoshu-mx leukotrichia@163.com
- * @LastEditTime: 2023-03-17 15:36:44
+ * @LastEditTime: 2023-11-01 10:57:18
  * @FilePath: \ThingsPanel-Backend-Vue\src\view\pages\product\managment\batch\CreateBatch.vue
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
 <template>
-  <el-dialog class="el-dark-dialog" title="创建批次" :visible.sync="dialogVisible" width="400px"
+  <el-dialog class="el-dark-dialog" :title="$t('PRODUCT_MANAGEMENT.BATCH_LIST.CREATEBATCH')" :visible.sync="dialogVisible" width="400px"
              :before-close="handleClose" :close-on-click-modal="false">
     <el-form :inline="false" label-position="left" label-width="80px" :model="formData" :rules="formRules">
 
       <el-row>
-        <el-form-item label="批次号" prop="batch_number">
+        <el-form-item :label="$t('PRODUCT_MANAGEMENT.BATCH_LIST.BATCHNUMBER')" prop="batch_number">
           <el-input v-model="formData.batch_number"></el-input>
         </el-form-item>
       </el-row>
       
 
       <el-row>
-        <el-form-item label="数量" prop="device_number">
+        <el-form-item :label="$t('COMMON.COUNT')" prop="device_number">
           <el-input-number v-model="formData.device_number"></el-input-number>
         </el-form-item>
       </el-row>
@@ -27,7 +27,7 @@
     </el-form>
 
     <span slot="footer" class="dialog-footer">
-      <el-button type="save" @click="handleSubmit">创建批次</el-button>
+      <el-button type="save" @click="handleSubmit">{{ $t('COMMON.CREATE') }}</el-button>
     </span>
   </el-dialog>
 </template>
@@ -82,7 +82,6 @@ export default {
         // add
         ProductAPI.batchAdd({product_id: this.data.product_id, ...this.formData})
           .then(({ data: result }) => {
-            console.log("result", result)
             if (result.code === 200) {
               this.$emit("submit")
               message_success("创建批次成功！")

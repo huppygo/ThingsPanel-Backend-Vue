@@ -3,6 +3,9 @@
     <div  v-if="showHeader" class="chart-header">
 
       <span class="title">{{ optionData.name }}</span>
+      <div class="tool-right">
+        <status-icon ref="statusIconRef" :status="status"/>
+      </div>
     </div>
 
     <div class="echarts" style="width: 100%; height:100%;position: absolute;top:0px;padding:6px" ref="chart" id="echarts"></div>
@@ -20,14 +23,14 @@
 </template>
 
 <script>
-import {  historyValue } from "@/api/device";
 import "@/core/mixins/charts.js"
-
+import StatusIcon from "./StatusIcon"
 let Echarts = require('echarts/lib/echarts');
 require('echarts/lib/chart/gauge');
 
 export default {
   name: "Echarts",
+  components: {StatusIcon},
   props: {
     showHeader: {
       type: [Boolean],
@@ -35,15 +38,19 @@ export default {
     },
     option: {
       type: [Object],
-      default: () => {return {}}
+      default: () => ({})
     },
     value: {
       type: [Object, String, Array],
-      default: () => { return {} }
+      default: () => ({})
     },
     device: {
       type: [Object],
-      default: () => {return {}}
+      default: () => ({})
+    },
+    status: {
+      type: [Boolean, Object],
+      default: () => ({})
     }
   },
   data() {
@@ -93,18 +100,34 @@ export default {
      * @param value
      */
     updateOption(value) {
-      console.log("====更新图表的值", this.option)
       if (this.option.controlType == "dashboard") {
-        let name = "";
-        if (this.option.series[0] && this.option.series[0].data[0] && this.option.series[0].data[0].name) {
-          name = this.option.series[0].data[0].name ;
+        try {
+          let name = "";
+          if (this.option.series[0] && this.option.series[0].data[0] && this.option.series[0].data[0].name) {
+            name = this.option.series[0].data[0].name ;
+          }
+          let series = [];
+          series = value.map((item, i) => {
+            if (!item.value) {
+              let opts = this.myEcharts.getOption();
+              let { data } = opts.series[i];
+              let detail = { formatter: '无数据' };
+              if (data && data[0]) {
+                let detail = { formatter: '{value}' + ((item.unit && item.unit !== "-") ? item.unit : "") };
+                return { data: [ { value: data[0].value, name } ], detail }
+              } else {
+                detail = { formatter: '无数据' };
+                return { data: [ { value: "", name } ], detail }
+              }
+            } else {
+              let detail = { formatter: '{value}' + ((item.unit && item.unit !== "-") ? item.unit : "") };
+              return { data: [ { value: item.value, name } ], detail }
+            }
+          })
+          this.myEcharts.setOption({ series });
+          this.$refs.statusIconRef.flush()
+        } catch (e) {
         }
-        let series = [];
-        series = value.map(item => {
-          let detail = { formatter: '{value}' + (item.unit != "-" ? item.unit : "") };
-          return { data: [ { value: item.value, name } ], detail }
-        })
-        this.myEcharts.setOption({ series });
       }
     },
     /**
@@ -122,7 +145,6 @@ export default {
     getChartStyle() {
       let style = this.optionData.style ? this.optionData.style : {};
       let backgroundColor = style.backgroundColor ? style.backgroundColor : "#2d3d86";
-      console.log("getChartStyle", backgroundColor)
       return {
         backgroundColor
       }
@@ -149,10 +171,14 @@ export default {
   height: 40px;
   padding-left: 10px;
   text-align: right;
+  z-index: 9999;
   //box-shadow: 0 2px 0px 0 rgba(0, 0, 0, 0.1);
   .title {
-    //width: 100%;
-    //flex-grow: 1;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     color: #fff;
     text-align: center;
     margin-top: 10px;

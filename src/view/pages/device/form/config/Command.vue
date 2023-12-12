@@ -1,13 +1,16 @@
 <template>
     <div>
         <div style="justify-content: space-between;display: flex;margin-bottom: 10px">
-            <el-button type="border" size="medium" @click="commandDialogVisible = true">下发命令</el-button>
+            <span>{{ subscribeTitle }}</span>
             <el-button type="border" size="medium" @click="getList">刷新</el-button>
+        </div>
+        <div style="display: flex;float: left;margin-bottom: 10px">
+            <el-button type="border" size="medium" @click="commandDialogVisible = true">下发命令</el-button>
         </div>
         <el-table :data="tableData" v-loading="loading">
             <el-table-column label="命令标识符" prop="command_identify" width="240"></el-table-column>
             <!-- <el-table-column label="命令名称" prop="command_name" width="auto"></el-table-column> -->
-            <el-table-column label="命令内容" prop="data" width="auto"></el-table-column>
+            <el-table-column label="命令参数" prop="data" width="auto"></el-table-column>
             <el-table-column label="命令下发时间" prop="send_time" width="auto">
                 <template v-slot="scope">
                     {{ dateFormat(scope.row.send_time) }}
@@ -43,7 +46,7 @@
                         </el-option>
                     </el-select>
                 </el-form-item>
-                <el-form-item label="命令内容" prop="command_data">
+                <el-form-item label="命令参数" prop="command_data">
                     <el-input type="textarea" :rows="12" v-model="commandFormData.command_data"></el-input>
                 </el-form-item>
             </el-form>
@@ -89,10 +92,19 @@ export default {
                 command_data: [
                     { required: true, message: '请输入命令内容', trigger: 'blur' }
                 ]
-            }
+            },
+            subscribeTitle: "设备订阅命令主题:  device/command/" +  this.device.token
         }
     },
     mounted() {
+        if (this.device.device_type === "1") {
+            this.subscribeTitle = "设备订阅命令主题:  device/command/" + this.device.token
+        } else if (this.device.device_type === "2"  && this.device.protocol === 'MQTT') {
+            // 网关
+            this.subscribeTitle = "设备订阅命令主题:  gateway/command/" + this.device.token
+        } else {
+            this.subscribeTitle = "";
+        }
         this.getList();
         this.getDeviceCommandList();
     },
@@ -106,7 +118,6 @@ export default {
                     if (data.code === 200) {
                         this.tableData = data.data.data
                         this.total = data.data.total
-                        console.log(this.tableData)
                     }
                 })
         },
@@ -130,7 +141,6 @@ export default {
                 if (command.commandId === id) {
                     // {"method":"{命令标识符}","params":{"key1":"1","key2":""}}
                     // this.commandFormData.command_data = JSON.stringify(command.commandParams, null, 4);
-                    console.log('command.commandParams', command.commandParams)
                     let params = {};
                     command.commandParams.forEach(param => {
                         switch (param.type.toLowerCase()) {
@@ -160,11 +170,9 @@ export default {
 
                     })
                     this.commandFormData.command_data = JSON.stringify(params, null, 4);
-                    console.log('params', params)
 
                 }
             })
-            console.log('handleChangeCommandId', id, this.commands)
         },
         /**
          * 发送命令

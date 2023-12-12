@@ -1,6 +1,8 @@
 <template>
   <div style="display:flex;width:100%">
-    <el-select ref="selectRef" style="width:100%;margin-right:4px" multiple v-model="optionArr" @remove-tag="removeOption">
+    <el-select ref="selectRef" style="width:100%;margin-right:4px" multiple 
+        :placeholder="'请选择' + placeholder"
+        v-model="optionArr" @remove-tag="removeOption">
         <el-option
             v-for="item in options"
             :key="item.identifier"
@@ -15,7 +17,7 @@
             <el-form-item label="参数名称" prop="name">
                 <el-input v-model="formData.name"></el-input>
             </el-form-item>
-            <el-form-item label="命令内容" prop="identifier">
+            <el-form-item label="参数标识符" prop="identifier">
                 <el-input v-model="formData.identifier"></el-input>
             </el-form-item>
             <el-form-item label="数据类型" prop="type">
@@ -44,6 +46,10 @@ export default {
       type: Array,
       default: () => []
     },
+    placeholder: {
+        type: String,
+        default: () => ''
+    }
   },
   data() {
     return {

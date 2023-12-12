@@ -30,8 +30,8 @@ export default function useDeviceIndex(business_id) {
                 total.value = data.data.total
                 let { table, ids } = washData(data.data.data);
                 tableData.value = data.data.data ? table : [];
+                console.log("getDeviceIndex", tableData.value)
                 deviceIds.value = ids;
-                console.log("====getDeviceTree.ids", ids);
                 getDeviceStatus(ids);
             }
         }).finally(() => {
@@ -71,7 +71,7 @@ export default function useDeviceIndex(business_id) {
                 row.children = [];
                 item.children.forEach(child => {
                     row.children.push(fillData(child));
-                    // ids.push(child.device);
+                    ids.push(child.device);
                 })
             }
             ids.push(row.device);
@@ -101,6 +101,7 @@ export default function useDeviceIndex(business_id) {
             protocol_config: item.protocol_config,
             subDeviceAddress: item.sub_device_addr ? item.sub_device_addr : "",
             chart_names: item.chart_names,
+            current_version: item.current_version || "",
             errors: {
                 name: "",
                 asset_id: "",
@@ -172,7 +173,6 @@ export default function useDeviceIndex(business_id) {
      * @param ids
      */
     function getDeviceStatus(ids) {
-        console.log("====getDeviceStatus.getTimers:", store.getters.getTimers(business_id))
         if (timer) clearInterval(timer);
         if (!ids || ids.length == 0) return;
         const fn = () => {
@@ -181,6 +181,9 @@ export default function useDeviceIndex(business_id) {
                     if (data.code == 200) {
                         tableData.value.forEach(item => {
                             item.device_state = data.data[item.id] ? data.data[item.id] : "0";
+                            item.children && item.children.forEach(child => {
+                                child.device_state = data.data[child.id] ? data.data[child.id] : "0";
+                            })
                         })
                     }
                 })
