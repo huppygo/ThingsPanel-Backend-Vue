@@ -31,7 +31,7 @@ jobs:
     - run: ls -lrt
     
     - name: Clone Vue codebase
-      run: git clone https://github.com/ThingsPanel/visual-editor.git
+      run: git clone https://github.com/huppygo/visual-editor.git
 
     - run: cd visual-editor
     - run: npm install -g pnpm
@@ -56,4 +56,4 @@ jobs:
         context: .
         file: ./Dockerfile
         push: true
-        tags: thingspanel/thingspanel-vue:v0.5.4.1
+        tags: huppygo/thingspanel-vue:v0.5.4.1
