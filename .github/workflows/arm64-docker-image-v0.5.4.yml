@@ -54,5 +54,5 @@ jobs:
         context: .
         file: ./Dockerfile
         push: true
-        tags: huppygo/thingspanel-vue:v0.5.4.1
+        tags: huppygo/thingspanel-vue-arm64:v0.5.4.1
         platforms: linux/arm64
